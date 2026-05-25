@@ -300,6 +300,13 @@ button{font-family:var(--f);}
 .gap-legend .gl.cov{background:var(--accBg);color:var(--acc);}
 .gap-legend .gl.low{background:var(--s2);color:var(--tf);}
 
+/* PDF export modal */
+.pdf-opts{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+.pdf-opts label{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--t);cursor:pointer;padding:6px 9px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--s2);}
+.pdf-opts label:hover{border-color:var(--accBd);}
+.pdf-opts input{width:auto;accent-color:var(--acc);}
+#pdfMo textarea{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t);font-family:var(--f);font-size:11px;padding:7px 9px;outline:none;resize:vertical;}
+
 /* TOAST */
 .toast{position:fixed;bottom:16px;right:16px;font-weight:600;font-size:11px;padding:9px 16px;border-radius:var(--rs);z-index:2000;transform:translateY(50px);opacity:0;transition:all .2s;max-width:420px;}
 .toast.show{transform:translateY(0);opacity:1;}
@@ -399,8 +406,10 @@ button{font-family:var(--f);}
         <button data-view="blueprint">LP Blueprint</button>
         <button data-view="detail">Page Detail</button>
         <button data-view="compare">Compare 1-on-1</button>
+        <button data-view="history">History</button>
       </div>
       <div class="tb-r">
+        <button class="btn btn-acc btn-sm" onclick="openPdfMo()" title="Export laporan PDF (pilih bagian)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg><span>PDF</span></button>
         <button class="btn btn-g btn-sm" onclick="exportXLSX()" title="Export semua sheet ke Excel (.xlsx)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>XLSX</span></button>
         <button class="btn btn-g btn-sm" onclick="exportCSV()" title="Export view aktif ke CSV"><span>CSV</span></button>
         <button class="btn btn-g btn-sm" onclick="exportMatrixImg('png')" title="Section Matrix → PNG"><span>PNG</span></button>
@@ -555,6 +564,30 @@ button{font-family:var(--f);}
     <div class="btn-row">
       <div style="flex:1"></div>
       <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="closeHelpMo()">Paham</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PDF EXPORT MODAL ===================== -->
+<div class="mo" id="pdfMo">
+  <div class="md">
+    <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Export Laporan PDF</h3>
+    <div class="sub">Pilih bagian yang mau dimasukkan ke laporan. Akan terbuka dialog Print browser — pilih "Save as PDF".</div>
+    <div class="pdf-opts" id="pdfOpts">
+      <label><input type="checkbox" value="cover" checked> Cover & ringkasan (keyword, tanggal, jumlah)</label>
+      <label><input type="checkbox" value="serp" checked> SERP Overview</label>
+      <label><input type="checkbox" value="matrix" checked> Section Matrix (landing/product)</label>
+      <label><input type="checkbox" value="gap" checked> Gap Analysis</label>
+      <label><input type="checkbox" value="bench" checked> Content Benchmark</label>
+      <label><input type="checkbox" value="blueprint" checked> LP Blueprint</label>
+      <label><input type="checkbox" value="topics"> Article Topics (kalau ada artikel)</label>
+      <label><input type="checkbox" value="detail"> Page Detail (heading tiap halaman)</label>
+    </div>
+    <div class="ig" style="margin-top:10px;"><label>Catatan/komentar untuk klien (opsional)</label><textarea id="pdfNote" rows="2" placeholder="mis. Analisa kompetitor untuk kampanye Q3..."></textarea></div>
+    <div class="btn-row">
+      <div style="flex:1"></div>
+      <button class="btn btn-g btn-sm" onclick="closePdfMo()">Cancel</button>
+      <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="generatePDF()">Buat PDF →</button>
     </div>
   </div>
 </div>
@@ -817,7 +850,7 @@ function parsePage(html,url){
   const ctaTexts=[...new Set(ctaEls.map(e=>e.textContent.trim().replace(/\s+/g,' ')).filter(Boolean))].slice(0,6);
 
   // page-type heuristic
-  const pt=detectPageType(doc,url,{h1,h2,words,forms,schema});
+  const pt=detectPageType(doc,url,{h1,h2,words,forms,schema,cta:ctaEls.length,wa:waLinks});
 
   return {
     meta_title:(doc.querySelector('title')?.textContent||'').trim().slice(0,160),
@@ -842,26 +875,30 @@ function detectPageType(doc,url,m){
   const hasProductSchema=/"@type"\s*:\s*"(Product|Offer|AggregateOffer)"/i.test(ld);
   const heads=(m.h1.join(' ')+' '+m.h2.join(' ')).toLowerCase();
   const words=m.words||0, forms=m.forms||0, h2n=m.h2.length;
+  const cta=m.cta||0, wa=m.wa||0;
 
   // ---- skoring artikel vs landing ----
   let art=0, lp=0;
   // schema = sinyal kuat
   if(hasArticleSchema) art+=4;
   if(hasProductSchema) lp+=4;
-  // URL pattern
-  if(/\/(blog|artikel|article|news|berita|read|baca|tips|panduan|guide|kategori-artikel)\//.test(path)) art+=3;
-  if(/\/(product|produk|shop|store|toko|jual|beli|pricing|harga|layanan|service|katalog|p\/)/.test(path)) lp+=3;
+  // URL pattern (sinyal kuat)
+  if(/\/(blog|artikel|article|news|berita|read|baca|tips|panduan|guide|kategori-artikel)\//.test(path)) art+=4;
+  if(/\/(product|produk|shop|store|toko|jual|beli|pricing|harga|layanan|service|katalog|p\/|kursus|course|kelas|program|les|bimbel)\//.test(path)) lp+=3;
   // judul tipikal artikel
-  if(/\b(\d+\s+(cara|tips|rekomendasi|terbaik|best|daftar|jenis|macam)|cara |how to|tutorial|panduan|apa itu|kenapa|mengapa|tips )\b/i.test(heads)) art+=3;
-  // panjang konten
-  if(words>=1500) art+=3; else if(words>=900) art+=1;
-  if(words<600) lp+=1;
-  // banyak H2 + teks panjang = artikel; form = LP
-  if(h2n>=5 && words>=900) art+=1;
-  if(forms>=1 && words<1200) lp+=2;
-  if(isHome) lp+=2;
+  if(/\b(\d+\s+(cara|tips|rekomendasi|terbaik|best|daftar|jenis|macam)|cara |how to|tutorial|apa itu|kenapa |mengapa )\b/i.test(heads)) art+=3;
+  // CTA & form & WA = ciri khas LP (artikel murni hampir nol) — sinyal kuat
+  if(forms>=1) lp+=3;
+  if(cta>=5) lp+=3; else if(cta>=2) lp+=2; else if(cta>=1) lp+=1;
+  if(wa>=1) lp+=2;
   // CTA/harga di heading = LP
-  if(/\b(harga|pricing|paket|beli sekarang|order|checkout|daftar sekarang|gratis konsultasi|hubungi kami)\b/i.test(heads)) lp+=2;
+  if(/\b(harga|pricing|paket|biaya|tarif|beli sekarang|order|checkout|daftar sekarang|gratis konsultasi|konsultasi gratis|hubungi kami|coba gratis|trial gratis|book|booking|reservasi)\b/i.test(heads)) lp+=2;
+  // panjang konten — bobot dikecilkan (LP edukasi/jasa sering panjang juga)
+  if(words>=2500) art+=2; else if(words>=1500) art+=1;
+  if(words<500) lp+=1;
+  if(isHome) lp+=2;
+  // tie-breaker: kalau ada CTA/form sama sekali & ga ada sinyal artikel kuat, condong LP
+  if((cta>=1||forms>=1) && !hasArticleSchema && art<4) lp+=1;
 
   const kind = art>lp ? 'article' : 'landing';
   // label detail untuk tampilan
@@ -982,6 +1019,26 @@ Return ONLY valid JSON, no markdown:
 
 // pages yang benar-benar dianalisa: bukan gagal, bukan platform yang di-skip
 function crawledPages(p){return p.pages.filter(x=>x&&!x.failed&&!x.skipped&&!x.blocked&&!x.notCrawled);}
+
+// ---- History snapshot: simpan ringkasan tiap analisa buat lihat perubahan ----
+function saveSnapshot(p){
+  if(!p.snapshots)p.snapshots=[];
+  const lp=landingPages(p);
+  const snap={
+    at:Date.now(),
+    lpCount:lp.length, artCount:articlePages(p).length,
+    crawled:crawledPages(p).length,
+    blocked:p.pages.filter(x=>x&&x.blocked).length,
+    // simpan % tiap section (dari landing) buat dibandingkan antar waktu
+    sectionPct:{},
+    // top domain & posisi (lihat pergeseran ranking)
+    serpTop:p.serp.slice(0,10).map(s=>({pos:s.isOurExtra?'>10':s.position,domain:s.domain})),
+    critCount:(p.gap||[]).filter(g=>g.priority.includes('CRITICAL')).length,
+  };
+  SEC_NAMES().forEach(n=>{const f=lp.filter(pg=>pg.sections&&pg.sections[n]).length;snap.sectionPct[n]=lp.length?Math.round(f/lp.length*100):0;});
+  p.snapshots.unshift(snap);
+  if(p.snapshots.length>20)p.snapshots=p.snapshots.slice(0,20); // simpan max 20
+}
 // jenis halaman efektif: override manual menang atas deteksi otomatis
 function effectiveKind(pg){return pg.pageKindOverride||pg.pageKind||'landing';}
 function articlePages(p){return crawledPages(p).filter(x=>effectiveKind(x)==='article');}
@@ -1173,6 +1230,7 @@ function renderView(){
   if(curView==='bench')return renderBenchView(p);
   if(curView==='blueprint')return renderBlueprintView(p);
   if(curView==='detail')return renderDetailView(p);
+  if(curView==='history')return renderHistoryView(p);
 }
 function renderSerpView(p){
   const ourClean=ourDomain();
@@ -1475,6 +1533,55 @@ function togglePageKind(idx){
   toast(`Diubah jadi ${pg.pageKindOverride==='article'?'Artikel':'Landing/Product'} — analisa di-update`);
 }
 
+// ---------- HISTORY (snapshot per keyword) ----------
+function renderHistoryView(p){
+  const snaps=(p&&p.snapshots)||[];
+  if(!snaps.length){
+    return $('content').innerHTML=`<div class="view-head"><div><h2>History</h2><div class="view-sub">Rekam jejak tiap analisa buat lihat perubahan dari waktu ke waktu</div></div></div>
+      <div class="es" style="height:auto;padding:40px;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--tf)" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <h4>Belum ada snapshot</h4><p>Tiap kali kamu <strong>Run Analysis</strong> untuk keyword ini, hasilnya otomatis tersimpan di sini. Run beberapa kali (mis. tiap bulan) buat lihat pergeseran section & ranking kompetitor.</p></div>`;
+  }
+  const fmt=t=>new Date(t).toLocaleString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const cur=snaps[0], prev=snaps[1];
+
+  // perbandingan section % terbaru vs sebelumnya
+  let cmpHtml='';
+  if(prev){
+    const names=SEC_NAMES();
+    const rows=names.map(n=>{
+      const a=prev.sectionPct[n]??0, b=cur.sectionPct[n]??0, d=b-a;
+      const arrow=d>0?`<span style="color:var(--ok);">▲ +${d}%</span>`:d<0?`<span style="color:var(--danger);">▼ ${d}%</span>`:'<span style="color:var(--tf);">—</span>';
+      return {n,a,b,d,arrow};
+    }).filter(r=>r.d!==0).sort((x,y)=>Math.abs(y.d)-Math.abs(x.d));
+    cmpHtml=`<div class="pd-sub">Perubahan section (snapshot terbaru vs sebelumnya)</div>
+      ${rows.length?`<table class="dt" style="margin-bottom:18px;"><thead><tr><th>Section</th><th class="num">${fmt(prev.at)}</th><th class="num">${fmt(cur.at)}</th><th class="num">Δ</th></tr></thead><tbody>
+      ${rows.map(r=>`<tr><td><strong>${esc(r.n)}</strong></td><td class="num">${r.a}%</td><td class="num">${r.b}%</td><td class="num">${r.arrow}</td></tr>`).join('')}
+      </tbody></table>`:`<div class="cmp-gap-box ok" style="display:block;margin-bottom:18px;">Tidak ada perubahan persentase section antar dua snapshot terakhir.</div>`}`;
+  }
+
+  // daftar semua snapshot
+  const list=snaps.map((s,i)=>`
+    <div class="pd-card">
+      <div class="pd-head"><span class="pd-pos">${i===0?'TERBARU':'#'+(snaps.length-i)}</span><strong>${fmt(s.at)}</strong>
+        <span class="pd-src">${s.lpCount} landing · ${s.artCount} artikel · ${s.blocked} blocked</span>
+        ${i!==0?`<button class="kind-toggle" onclick="delSnapshot(${i})" title="Hapus snapshot ini">🗑 hapus</button>`:''}</div>
+      <div class="pd-stats">${s.critCount} gap kritis · ter-crawl ${s.crawled}</div>
+      <div class="pd-sub">SERP top (saat itu)</div>
+      <div class="bp-items">${s.serpTop.map(x=>`<span class="bp-chip">#${x.pos} ${esc(x.domain)}</span>`).join('')}</div>
+    </div>`).join('');
+
+  $('content').innerHTML=`
+    <div class="view-head"><div><h2>History</h2><div class="view-sub">${snaps.length} snapshot tersimpan · keyword "${esc(p.keyword||'')}"</div></div></div>
+    ${cmpHtml}
+    <div class="pd-sub">Semua snapshot</div>
+    <div class="pd-list">${list}</div>`;
+}
+function delSnapshot(i){
+  const p=P();if(!p||!p.snapshots||!p.snapshots[i])return;
+  if(!confirm('Hapus snapshot ini?'))return;
+  p.snapshots.splice(i,1);saveProjects();renderView();toast('Snapshot dihapus');
+}
+
 // ---------- COMPARE 1-on-1 ----------
 let compareState={a:null,b:null,busy:false}; // a,b = parsed page objects
 function renderCompareView(p){
@@ -1671,6 +1778,8 @@ async function runAnalysis(){
     p.bench=buildBench(p);
     p.blueprint=buildBlueprint(p.gap,p);
     p.analyzedAt=Date.now();
+    // ---- simpan snapshot history (ringkas) ----
+    saveSnapshot(p);
     saveProjects();renderProjects();renderActiveInfo();
 
     curView='serp';renderView();
@@ -2007,6 +2116,114 @@ function exportMatrixImg(fmt){
   };
   img.onerror=()=>toast('PNG gagal render','err');
   img.src=url;
+}
+
+/* ===================== PDF REPORT ===================== */
+function openPdfMo(){
+  const p=P();
+  if(!p||!p.serp||!p.serp.length){toast('Belum ada hasil. Run Analysis dulu.','err');return;}
+  // auto-centang topics kalau ada artikel
+  const hasArt=articlePages(p).length>0;
+  $('pdfMo').querySelectorAll('#pdfOpts input').forEach(c=>{if(c.value==='topics')c.checked=hasArt;});
+  $('pdfMo').classList.add('active');
+}
+function closePdfMo(){$('pdfMo').classList.remove('active');}
+function generatePDF(){
+  const p=P();if(!p)return;
+  const sel=[...$('pdfOpts').querySelectorAll('input:checked')].map(c=>c.value);
+  if(!sel.length){toast('Pilih minimal 1 bagian','err');return;}
+  const note=($('pdfNote').value||'').trim();
+  const names=SEC_NAMES();
+  const lp=landingPages(p), arts=articlePages(p), ok=crawledPages(p);
+  const esc2=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const date=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  let h='';
+
+  if(sel.includes('cover')){
+    h+=`<section class="cover"><div class="brand">LP COMPETITOR ANALYSIS</div>
+      <h1>${esc2(p.keyword||'(tanpa keyword)')}</h1>
+      <div class="meta">${date} · gl=${esc2(p.gl)} hl=${esc2(p.hl)}${p.loc?' · '+esc2(p.loc):''}</div>
+      <div class="meta">${p.serp.length} hasil SERP · ${ok.length} ter-crawl · ${lp.length} landing · ${arts.length} artikel</div>
+      ${note?`<div class="note">${esc2(note)}</div>`:''}
+      <div class="by">Disusun oleh Teguh Gunawan, S.Li.</div></section>`;
+  }
+  if(sel.includes('serp')){
+    h+=`<section><h2>SERP Overview</h2><table><tr><th>#</th><th>Domain</th><th>Type</th><th>Title</th></tr>`;
+    p.serp.forEach(s=>{h+=`<tr><td>${s.isOurExtra?'&gt;10':s.position}</td><td>${esc2(s.domain)}</td><td>${esc2(s.platform||(s.isOurExtra?'OUR URL':'Website'))}</td><td>${esc2(s.title)}</td></tr>`;});
+    h+=`</table></section>`;
+  }
+  if(sel.includes('matrix')&&lp.length){
+    h+=`<section><h2>Section Matrix — Landing/Product (${lp.length})</h2><table class="mx"><tr><th>Domain</th>${names.map(n=>`<th class="v">${esc2(secAbbr(n))}</th>`).join('')}<th>Σ</th></tr>`;
+    lp.sort((a,b)=>a.position-b.position).forEach(pg=>{let t=0;const c=names.map(n=>{const has=pg.sections&&pg.sections[n];if(has)t++;return `<td class="ce">${has?'✓':''}</td>`;}).join('');h+=`<tr><td>${esc2(pg.domain)}</td>${c}<td>${t}</td></tr>`;});
+    const freq=names.map(n=>lp.filter(pg=>pg.sections&&pg.sections[n]).length);
+    h+=`<tr class="fr"><td>FREKUENSI</td>${freq.map(c=>`<td class="ce">${c}</td>`).join('')}<td></td></tr></table></section>`;
+  }
+  if(sel.includes('gap')&&p.gap){
+    const noOur=p.gap.every(g=>g.weHave===null);
+    h+=`<section><h2>Gap Analysis</h2><table><tr><th>Section</th><th>Freq</th><th>%</th>${noOur?'':'<th>Kita</th>'}<th>Prioritas</th><th>Action</th></tr>`;
+    [...p.gap].sort((a,b)=>(PRIO_ORDER[a.priority]??9)-(PRIO_ORDER[b.priority]??9)).forEach(g=>{h+=`<tr><td>${esc2(g.section)}</td><td>${g.freq}/${g.total}</td><td>${g.pct}%</td>${noOur?'':`<td>${g.weHave?'✓':'✗'}</td>`}<td>${esc2(g.priority)}</td><td>${esc2(g.action)}</td></tr>`;});
+    h+=`</table></section>`;
+  }
+  if(sel.includes('bench')&&p.bench&&p.bench.length){
+    h+=`<section><h2>Content Benchmark</h2><table><tr><th>Metric</th><th>Avg</th><th>Min</th><th>Max</th><th>Kita</th><th>Status</th></tr>`;
+    p.bench.forEach(b=>{h+=`<tr><td>${esc2(b.label)}</td><td>${b.avg}</td><td>${b.min}</td><td>${b.max}</td><td>${b.ourVal===null?'—':b.ourVal}</td><td>${esc2(b.status)}</td></tr>`;});
+    h+=`</table></section>`;
+  }
+  if(sel.includes('blueprint')&&p.blueprint){
+    const b=p.blueprint;const li=arr=>arr&&arr.length?arr.map(esc2).join(', '):'—';
+    h+=`<section><h2>LP Blueprint</h2>
+      <p><b>🔴 MUST HAVE:</b> ${li(b.critical)}</p>
+      <p><b>🟡 SHOULD HAVE:</b> ${li(b.high)}</p>
+      <p><b>🟢 NICE TO HAVE:</b> ${li(b.medium)}</p>
+      <p><b>⭐ OUR ADVANTAGE:</b> ${li(b.advantage)}</p>
+      ${b.topComp?`<p><b>📊 Benchmark target:</b> ${esc2(b.topComp)} (${b.topCount} section)</p>`:''}</section>`;
+  }
+  if(sel.includes('topics')&&arts.length){
+    const {topics,comps}=buildArticleTopics(p);
+    h+=`<section><h2>Article Topics (${arts.length} artikel)</h2>`;
+    if(topics.length){h+=`<p><b>Topik inti (dibahas ≥40% artikel):</b></p><table><tr><th>Topik</th><th>Freq</th><th>%</th></tr>`;topics.forEach(t=>{h+=`<tr><td>${esc2(t.topic)}</td><td>${t.freq}/${t.total}</td><td>${t.pct}%</td></tr>`;});h+=`</table>`;}
+    else h+=`<p>Belum ada topik dominan.</p>`;
+    h+=`</section>`;
+  }
+  if(sel.includes('detail')){
+    h+=`<section><h2>Page Detail</h2>`;
+    ok.sort((a,b)=>a.position-b.position).forEach(pg=>{
+      const heads=[...(pg.h2||[])].slice(0,12);
+      h+=`<div class="pd"><b>#${pg.position} ${esc2(pg.domain)}</b> <span class="tag">${esc2(pg.pageType||'')}</span><br><i>${esc2(pg.meta_title||'')}</i><br>${pg.word_count} kata · H2:${pg.h2_count} · CTA:${pg.cta_button_count}<br>${heads.map(t=>'• '+esc2(t)).join('<br>')}</div>`;
+    });
+    h+=`</section>`;
+  }
+
+  const doc=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc2(p.keyword||'LP Analysis')} — Report</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',-apple-system,Segoe UI,sans-serif;color:#1a1a1a;font-size:11px;line-height:1.5;padding:0;}
+    section{padding:24px 30px;page-break-inside:avoid;}
+    .cover{height:100vh;display:flex;flex-direction:column;justify-content:center;page-break-after:always;border-left:6px solid #1d4ed8;}
+    .brand{font-size:11px;letter-spacing:3px;color:#1d4ed8;font-weight:700;margin-bottom:12px;}
+    .cover h1{font-size:34px;margin-bottom:14px;text-transform:capitalize;}
+    .meta{color:#555;font-size:12px;margin-bottom:4px;}
+    .note{margin-top:20px;padding:12px 16px;background:#f1f5ff;border-left:3px solid #1d4ed8;font-style:italic;color:#333;}
+    .by{margin-top:auto;padding-top:30px;color:#888;font-size:11px;}
+    h2{font-size:17px;color:#1d4ed8;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #e5e8ed;}
+    table{width:100%;border-collapse:collapse;margin-bottom:8px;font-size:10px;}
+    th,td{border:1px solid #ddd;padding:4px 7px;text-align:left;vertical-align:top;}
+    th{background:#f1f3f7;font-weight:600;}
+    table.mx th.v{writing-mode:vertical-rl;transform:rotate(180deg);height:70px;padding:4px 2px;font-size:8px;}
+    table.mx td.ce{text-align:center;font-weight:700;color:#047857;}
+    table.mx tr.fr td{background:#fff7ed;font-weight:700;}
+    p{margin-bottom:7px;}
+    .pd{margin-bottom:12px;padding:9px 11px;background:#f9fafb;border:1px solid #eee;border-radius:5px;page-break-inside:avoid;}
+    .tag{font-size:8px;background:#e0e7ff;color:#1d4ed8;padding:1px 6px;border-radius:3px;}
+    @media print{.cover{height:auto;min-height:90vh;}@page{margin:1cm;}}
+  </style></head><body>${h}
+  <script>window.onload=function(){setTimeout(function(){window.print();},400);}<\/script>
+  </body></html>`;
+
+  const w=window.open('','_blank');
+  if(!w){toast('Popup diblokir — izinkan popup buat situs ini','err');return;}
+  w.document.write(doc);w.document.close();
+  closePdfMo();toast('Report dibuka — pilih "Save as PDF" di dialog print');
 }
 
 // ---------- Init ----------
