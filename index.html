@@ -85,6 +85,22 @@ button{font-family:var(--f);}
 
 /* PROJECTS LIST */
 .proj-item{padding:8px 10px;border-radius:var(--rs);cursor:pointer;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:500;transition:background .12s;margin-bottom:2px;position:relative;}
+.fold{margin-bottom:3px;}
+.fold-h{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:var(--rs);cursor:pointer;font-size:11px;font-weight:600;color:var(--t);user-select:none;}
+.fold-h:hover{background:var(--s2);}
+.fold-h.nofold{cursor:default;}.fold-h.nofold:hover{background:none;}
+.fold-caret{width:13px;height:13px;flex-shrink:0;transition:transform .15s;transform:rotate(90deg);}
+.fold-h.col .fold-caret{transform:rotate(0deg);}
+.fold-ic{width:14px;height:14px;flex-shrink:0;color:var(--acc);}
+.fold-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fold-count{font-size:9px;background:var(--s2);color:var(--td);padding:1px 6px;border-radius:8px;font-family:var(--m);}
+.fold-acts{display:none;gap:2px;}
+.fold-h:hover .fold-acts{display:flex;}
+.fold-acts button{background:none;border:none;color:var(--td);cursor:pointer;padding:2px;display:flex;}
+.fold-acts button:hover{color:var(--acc);}
+.fold-acts svg{width:12px;height:12px;}
+.fold-body{padding-left:10px;margin-left:5px;border-left:1px solid var(--bd);}
+.fold-empty{font-size:10px;color:var(--tf);font-style:italic;padding:6px 8px;}
 .proj-item:hover{background:var(--s2);}
 .proj-item.active{background:var(--s2);border-left:2px solid var(--acc);}
 .proj-item svg{flex-shrink:0;color:var(--td);width:13px;height:13px;}
@@ -361,7 +377,10 @@ button{font-family:var(--f);}
     <div class="side-sec">
       <h3>
         <span style="display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Analyses</span>
-        <button class="btn btn-g btn-sm" style="padding:3px 8px;" onclick="addProject()">+ New</button>
+        <span style="display:flex;gap:4px;">
+          <button class="btn btn-g btn-sm" style="padding:3px 8px;" onclick="addFolder()" title="Buat folder (brand/topik/niche)">+ Folder</button>
+          <button class="btn btn-g btn-sm" style="padding:3px 8px;" onclick="addProject()">+ New</button>
+        </span>
       </h3>
       <div id="projList"></div>
     </div>
@@ -638,11 +657,13 @@ function secAbbr(n){return SECTION_ABBR[n]||n;}
 
 // ---------- State ----------
 const LS_PROJECTS = 'lpca-projects';
+const LS_FOLDERS  = 'lpca-folders';
 const LS_SETTINGS = 'lpca-settings';
 const LS_THEME    = 'lpca-theme';
 const LS_SYNC     = 'lpca-sync';
 
-let projects = [];      // [{id,name,keyword,domain,gl,hl,loc,detect,createdAt,serp:[],pages:[],sections:{},...}]
+let projects = [];      // [{id,name,keyword,...,folderId}]  folderId=null → Tanpa Folder
+let folders = [];       // [{id,name,collapsed}]  folder = brand/topik/niche
 let activeProj = null;
 let curView = 'serp';
 
@@ -675,7 +696,7 @@ function toast(msg,type){ // type: 'ok'(default)|'err'|'info'
 function keyId(k){let h=0;for(let i=0;i<k.length;i++){h=((h<<5)-h+k.charCodeAt(i))|0;}return 'k'+Math.abs(h);}
 
 // ---------- Persistence ----------
-function saveProjects(){try{localStorage.setItem(LS_PROJECTS,JSON.stringify(projects));}catch(e){}}
+function saveProjects(){try{localStorage.setItem(LS_PROJECTS,JSON.stringify(projects));localStorage.setItem(LS_FOLDERS,JSON.stringify(folders));}catch(e){}}
 function saveSettings(silent){
   // gather model + proxy from modal if open
   const m=$('aiModel');if(m)settings.aiModel=m.value;
@@ -688,6 +709,7 @@ function saveSettings(silent){
 }
 function loadAll(){
   try{const p=localStorage.getItem(LS_PROJECTS);if(p){projects=JSON.parse(p);if(projects.length)activeProj=projects[0].id;}}catch(e){}
+  try{const f=localStorage.getItem(LS_FOLDERS);if(f){folders=JSON.parse(f);}}catch(e){}
   try{const s=localStorage.getItem(LS_SETTINGS);if(s){settings={...settings,...JSON.parse(s)};}}catch(e){}
   try{const sy=localStorage.getItem(LS_SYNC);if(sy){syncCfg={...syncCfg,...JSON.parse(sy)};}}catch(e){}
 }
@@ -880,7 +902,7 @@ function detectPageType(doc,url,m){
   const cta=m.cta||0, wa=m.wa||0;
 
   // pola JUDUL khas artikel (lintas-niche, ID + EN) — sinyal kuat
-  const TITLE_ART=/\b(\d{1,3}\s+\w+|top\s+\d+)\b.*\b(terbaik|best|rekomendasi|tips|cara|pilihan|review)\b|\b(terbaik|best|rekomendasi|tips|teratas|top \d)\b.*\b(\d{1,3}|tahun|\w+)\b|\b(panduan|guide|tutorial|review|ulasan|rekomendasi|how\s?to|apa\s?itu|kenapa|mengapa|tips|ultimate|complete|lengkap|in-?depth|honest|versus|perbandingan|pengertian|sejarah|manfaat|perbedaan|penyebab|gejala|daftar|listicle|best (places?|ways?|things?|hotels?|tips)|where to|what to|how to|things to do)\b|\bvs\b|\b(19|20)\d{2}\b/i;
+  const TITLE_ART=/\b(\d{1,3}\s+\w+|top\s+\d+)\b.*\b(terbaik|terlaris|terlengkap|teratas|terpopuler|best|rekomendasi|tips|cara|pilihan|review|wajib)\b|\b(terbaik|terlaris|terlengkap|teratas|terpopuler|best|rekomendasi|tips|top \d)\b.*\b(\d{1,3}|tahun|untuk|yang|\w+)\b|^\s*\d{1,3}\s+\w+|\b(panduan|guide|tutorial|review|ulasan|rekomendasi|how\s?to|apa\s?itu|kenapa|mengapa|tips|ultimate|complete|lengkap|in-?depth|honest|versus|perbandingan|pengertian|sejarah|manfaat|perbedaan|penyebab|gejala|daftar|listicle|best (places?|ways?|things?|hotels?|tips)|where to|what to|how to|things to do)\b|\bvs\b|\b(19|20)\d{2}\b/i;
   // pola JUDUL khas LP/komersil (hindari kata yg juga umum di artikel spt "harga"/"review")
   const TITLE_LP=/\b(beli sekarang|jual|gratis ongkir|ready stock|pre-?order|daftar sekarang|order sekarang|pesan sekarang|booking sekarang|sewa|jasa|spesifikasi|brosur|dealer resmi|kredit|cicilan|simulasi|promo|diskon)\b/i;
 
@@ -900,12 +922,12 @@ function detectPageType(doc,url,m){
   // pola artikel di URL — hampir pasti artikel apa pun CTA-nya (multi-niche)
   const ART_URL=/\/(blog|blogs|artikel|articles?|news|berita|read|baca|story|stories|post|posts|tips|panduan|guide|tutorial|how-?to|cara-|kategori\/|category\/|categories\/|tag\/|tags\/|wiki|knowledge|edukasi|insight|info|informasi|review|ulasan|rekomendasi|inspirasi|ide|magazine|majalah|jurnal|journal|press|publikasi|faq|tanya|kesehatan\/|tutorials?|learn|belajar\/|tahukah|seputar|mengenal|pengertian|sejarah|manfaat|perbedaan|penyebab|gejala|jenis-)/i;
   // pola LP/komersil di URL (multi-niche: e-comm, jasa, edukasi, properti, otomotif, dll)
-  const LP_URL=/\/(product|produk|shop|store|toko|jual|beli|buy|cart|keranjang|checkout|pricing|harga|price|layanan|services?|jasa|katalog|catalog|collection|koleksi|item|p\/|c\/|sku|kursus|course|kelas|class|program|paket|package|les|bimbel|promo|diskon|landing|lp\/|daftar|register|signup|sign-up|booking|pesan|order|reservasi|sewa|rental|kredit|simulasi|brosur|spesifikasi|dealer|cabang|outlet|gallery-produk)/i;
+  const LP_URL=/\/(product|produk|shop|store|toko|jual|beli|buy|cart|keranjang|checkout|pricing|harga|price|layanan|services?|jasa|katalog|catalog|collection|koleksi|item|p\/|c\/|sku|kursus|course|kelas|class|program|paket|package|les|bimbel|promo|diskon|landing|lp\/|daftar|register|signup|sign-up|booking|pesan|order|reservasi|sewa|rental|kredit|simulasi|brosur|spesifikasi|dealer|cabang|outlet|gallery-produk|(pria|wanita|men|women|kids|anak)-(sepatu|baju|pakaian|tas|celana|sandal|jaket|kaos|shoes|clothing|apparel|bags?)|(sepatu|baju|tas|celana|sandal|jaket)-(pria|wanita|men|women|anak))/i;
   const artUrl=ART_URL.test(path), lpUrl=LP_URL.test(path);
-  // sinyal pendukung: ANGKA di slug akhir (umum di artikel: tahun / "10-tips" / "-2026")
-  //   tapi NOT di pola produk (kode/varian) — makanya cuma dipakai saat URL ga jelas LP
+  // sinyal pendukung: ANGKA di slug akhir (umum di artikel: tahun / "10-tips" / "3-sepatu")
   const lastSeg=path.replace(/\/$/,'').split('/').pop()||'';
-  const hasYearOrListNum=/(^|[-_])(19|20)\d{2}([-_]|$)/.test(lastSeg) || /(^|[-_])\d{1,2}[-_](cara|tips|rekomendasi|jenis|macam|hal|alasan|langkah|trik|ide|merk|merek|pilihan|terbaik|cara2)/i.test(lastSeg);
+  // tahun, ATAU angka+kata di AWAL slug (mis "3-sepatu-adidas-terlaris", "10-tips") = listicle
+  const hasYearOrListNum=/(^|[-_])(19|20)\d{2}([-_]|$)/.test(lastSeg) || /^\d{1,3}[-_][a-z]/i.test(lastSeg);
   // kalau URL JELAS salah satu (dan ga dua-duanya), itu keputusan final
   if(artUrl && !lpUrl) return {kind:'article',label:lbl('article')};
   if(lpUrl && !artUrl) return {kind:'landing',label:lbl('landing')};
@@ -1198,20 +1220,81 @@ function addProject(){
 function selProject(id){activeProj=id;renderProjects();renderActiveInfo();renderView();}
 function renameProject(id,e){e.stopPropagation();const p=projects.find(x=>x.id===id);if(!p)return;const n=prompt('Rename:',p.name);if(n){p.name=n;saveProjects();renderProjects();}}
 function delProject(id,e){e.stopPropagation();if(!confirm('Hapus analisa ini?'))return;projects=projects.filter(x=>x.id!==id);if(activeProj===id)activeProj=projects[0]?.id||null;saveProjects();renderProjects();renderActiveInfo();renderView();}
-function renderProjects(){
-  const el=$('projList');
-  if(!projects.length){el.innerHTML='<div class="key-empty">Belum ada analisa.</div>';return;}
-  el.innerHTML=projects.map(p=>`
-    <div class="proj-item ${p.id===activeProj?'active':''}" onclick="selProject('${p.id}')">
+function projItemHtml(p){
+  return `<div class="proj-item ${p.id===activeProj?'active':''}" onclick="selProject('${p.id}')" draggable="true" ondragstart="dragProj(event,'${p.id}')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <span class="p-name">${esc(p.name)}</span>
       <span class="p-meta">${(p.serp&&p.serp.length)||0}</span>
       <span class="p-acts">
+        <button onclick="moveProjectMenu('${p.id}',event)" title="Pindah ke folder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></button>
         <button onclick="renameProject('${p.id}',event)" title="Rename"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
         <button onclick="delProject('${p.id}',event)" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
       </span>
-    </div>`).join('');
+    </div>`;
 }
+function renderProjects(){
+  const el=$('projList');
+  if(!projects.length){el.innerHTML='<div class="key-empty">Belum ada analisa.</div>';return;}
+  let html='';
+  // tiap folder (brand/niche) + project di dalamnya
+  folders.forEach(f=>{
+    const inside=projects.filter(p=>p.folderId===f.id);
+    html+=`<div class="fold" ondragover="event.preventDefault()" ondrop="dropProj(event,'${f.id}')">
+      <div class="fold-h ${f.collapsed?'col':''}" onclick="toggleFolder('${f.id}')">
+        <svg class="fold-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg class="fold-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span class="fold-name">${esc(f.name)}</span><span class="fold-count">${inside.length}</span>
+        <span class="fold-acts">
+          <button onclick="renameFolder('${f.id}',event)" title="Rename folder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+          <button onclick="delFolder('${f.id}',event)" title="Hapus folder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+        </span>
+      </div>
+      ${f.collapsed?'':`<div class="fold-body">${inside.length?inside.map(projItemHtml).join(''):'<div class="fold-empty">kosong — drag analisa ke sini</div>'}</div>`}
+    </div>`;
+  });
+  // grup Tanpa Folder
+  const orphan=projects.filter(p=>!p.folderId||!folders.find(f=>f.id===p.folderId));
+  if(orphan.length){
+    html+=`<div class="fold" ondragover="event.preventDefault()" ondrop="dropProj(event,'')">
+      <div class="fold-h nofold"><span class="fold-name" style="color:var(--td);">Tanpa Folder</span><span class="fold-count">${orphan.length}</span></div>
+      <div class="fold-body">${orphan.map(projItemHtml).join('')}</div>
+    </div>`;
+  }
+  el.innerHTML=html;
+}
+// ---- folder management ----
+function addFolder(){
+  const n=prompt('Nama folder (brand / topik / niche):');
+  if(!n||!n.trim())return;
+  folders.unshift({id:uid(),name:n.trim(),collapsed:false});
+  saveProjects();renderProjects();toast('Folder dibuat');
+}
+function renameFolder(id,e){e.stopPropagation();const f=folders.find(x=>x.id===id);if(!f)return;const n=prompt('Rename folder:',f.name);if(n&&n.trim()){f.name=n.trim();saveProjects();renderProjects();}}
+function delFolder(id,e){e.stopPropagation();
+  const inside=projects.filter(p=>p.folderId===id).length;
+  if(!confirm(`Hapus folder ini? ${inside} analisa di dalamnya akan dipindah ke "Tanpa Folder" (analisa TIDAK terhapus).`))return;
+  projects.forEach(p=>{if(p.folderId===id)p.folderId=null;});
+  folders=folders.filter(x=>x.id!==id);
+  saveProjects();renderProjects();toast('Folder dihapus, analisa dipindah ke Tanpa Folder');
+}
+function toggleFolder(id){const f=folders.find(x=>x.id===id);if(f){f.collapsed=!f.collapsed;saveProjects();renderProjects();}}
+// pindah project ke folder (via menu prompt)
+function moveProjectMenu(id,e){e.stopPropagation();
+  const p=projects.find(x=>x.id===id);if(!p)return;
+  if(!folders.length){if(confirm('Belum ada folder. Buat folder dulu?'))addFolder();return;}
+  const opts=folders.map((f,i)=>`${i+1}. ${f.name}`).join('\n');
+  const ans=prompt(`Pindah "${p.name}" ke folder mana? (ketik nomor, atau 0 = Tanpa Folder)\n\n0. Tanpa Folder\n${opts}`);
+  if(ans===null)return;
+  const idx=parseInt(ans);
+  if(idx===0){p.folderId=null;}
+  else if(idx>=1&&idx<=folders.length){p.folderId=folders[idx-1].id;}
+  else{toast('Nomor ga valid','err');return;}
+  saveProjects();renderProjects();toast('Analisa dipindah');
+}
+// drag & drop
+let _dragId=null;
+function dragProj(e,id){_dragId=id;e.dataTransfer.effectAllowed='move';}
+function dropProj(e,folderId){e.preventDefault();if(!_dragId)return;const p=projects.find(x=>x.id===_dragId);if(p){p.folderId=folderId||null;saveProjects();renderProjects();toast('Analisa dipindah');}_dragId=null;}
 function renderActiveInfo(){
   const p=P();
   if(!p)return;
@@ -1969,7 +2052,7 @@ async function syncPush(){
     const r=await fetch('https://api.github.com/gists/'+syncCfg.gistId,{
       method:'PATCH',
       headers:{'Authorization':'token '+syncCfg.token,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
-      body:JSON.stringify({files:{'lp-competitor-analyzer.json':{content:JSON.stringify(projects,null,2)}}})
+      body:JSON.stringify({files:{'lp-competitor-analyzer.json':{content:JSON.stringify({projects,folders},null,2)}}})
     });
     if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||('HTTP '+r.status));}
     syncCfg.lastSync=Date.now();saveSync();toast('Pushed ke cloud!');
@@ -1990,11 +2073,14 @@ async function syncPull(){
     let content=file.content;
     if(file.truncated&&file.raw_url){content=await (await fetch(file.raw_url)).text();}
     const data=JSON.parse(content||'[]');
-    if(!Array.isArray(data))throw new Error('Format data salah (harus array)');
-    projects=data;activeProj=projects[0]?.id||null;
+    // backward-compat: format lama = array projects; format baru = {projects,folders}
+    if(Array.isArray(data)){projects=data;folders=folders||[];}
+    else if(data&&Array.isArray(data.projects)){projects=data.projects;folders=Array.isArray(data.folders)?data.folders:[];}
+    else throw new Error('Format data salah');
+    activeProj=projects[0]?.id||null;
     saveProjects();syncCfg.lastSync=Date.now();saveSync();
     renderProjects();renderActiveInfo();renderView();
-    toast(`Pulled ${projects.length} analisa!`);
+    toast(`Pulled ${projects.length} analisa, ${folders.length} folder!`);
   }catch(e){console.error(e);$('syncSt').className='st-pill err';toast('Pull gagal: '+e.message,'err');}
   finally{syncBusy=false;updateStatusPills();}
 }
