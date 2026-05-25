@@ -989,6 +989,32 @@ function landingPages(p){return crawledPages(p).filter(x=>effectiveKind(x)!=='ar
 // normalisasi judul topik artikel biar bisa dibandingkan antar artikel
 function normTopic(s){return (s||'').toLowerCase().replace(/[^\w\s]/g,' ').replace(/\s+/g,' ').trim();}
 
+// ---- Topic clustering (keyword-based, untuk analisa artikel) ----
+const TOPIC_STOP=new Set('yang di ke dari untuk dan atau dengan pada the a an of to for in on is are be it apa cara macam jenis daftar tips rekomendasi terbaik best bagus paling adalah dapat bisa juga akan saat ketika agar supaya itu ini nya kah lah pun mengapa kenapa bagaimana harus sebuah para suatu'.split(/\s+/));
+function topicKeywords(h){
+  return (h||'').toLowerCase().replace(/[^\w\sà-ÿ]/g,' ').split(/\s+/)
+    .filter(w=>w.length>=4 && !TOPIC_STOP.has(w) && !/^\d+$/.test(w)).slice(0,4);
+}
+function articleTopicSet(pg){
+  const heads=[...(pg.h2||[]),...(pg.h3||[])];
+  const kws=new Set();
+  heads.forEach(h=>topicKeywords(h).forEach(k=>kws.add(k)));
+  return kws;
+}
+// bangun daftar TOPIK inti lintas artikel + frekuensi (berapa artikel kompetitor bahas)
+function buildArticleTopics(p){
+  const arts=articlePages(p);
+  const ourClean=ourDomain();
+  const ourArt=ourClean?arts.find(a=>a.domain.includes(ourClean)):null;
+  const comps=ourArt?arts.filter(a=>a!==ourArt):arts;
+  const kwFreq={};
+  comps.forEach(a=>{articleTopicSet(a).forEach(k=>{kwFreq[k]=(kwFreq[k]||0)+1;});});
+  const minN=Math.max(2,Math.ceil(comps.length*0.4));
+  const topics=Object.entries(kwFreq).filter(([k,v])=>v>=minN).sort((a,b)=>b[1]-a[1])
+    .map(([k,v])=>({topic:k,freq:v,total:comps.length,pct:comps.length?Math.round(v/comps.length*100):0}));
+  return {topics,arts,comps,ourArt};
+}
+
 // ---- Gap analysis (ported generate_gap_analysis) ----
 function buildGap(p){
   const names=SECTION_PATTERNS.map(s=>s[0]);
@@ -1241,40 +1267,90 @@ function renderTopicsView(p){
   if(!arts.length){
     return $('content').innerHTML=`<div class="view-head"><div><h2>Article Topics</h2><div class="view-sub">Analisa khusus halaman artikel/blog</div></div></div>
       <div class="es" style="height:auto;padding:40px;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--tf)" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      <h4>Tidak ada halaman artikel di hasil ini</h4><p>Semua hasil ter-crawl terdeteksi sebagai landing/product page. Lihat <strong>Section Matrix</strong> untuk analisanya.</p></div>`;
+      <h4>Tidak ada halaman artikel di hasil ini</h4><p>Semua hasil ter-crawl terdeteksi sebagai landing/product page. Lihat <strong>Section Matrix</strong>. Kalau ada yang salah deteksi, ubah di <strong>Page Detail</strong> (tombol ⇄).</p></div>`;
   }
 
-  // kumpulkan topik (H2 + H3) per artikel
-  const perArticle=arts.map(pg=>{
-    const topics=[...(pg.h2||[]),...(pg.h3||[])].map(t=>t.trim()).filter(t=>t.length>3&&t.length<120);
-    return {domain:pg.domain,url:pg.url,position:pg.position,title:pg.meta_title,wc:pg.word_count,label:pg.pageType,topics};
-  });
+  const {topics,comps,ourArt}=buildArticleTopics(p);
+  const ourClean=ourDomain();
 
-  // topik umum lintas artikel (berdasarkan kata kunci yang sering muncul di heading)
-  const freq={};
-  perArticle.forEach(a=>{
-    const seen=new Set();
-    a.topics.forEach(t=>{
-      const n=normTopic(t);
-      // pakai bigram/keyword sederhana: simpan judul ternormalisasi
-      if(n && !seen.has(n)){seen.add(n);freq[n]=(freq[n]||0)+1;}
-    });
-  });
-  // ambil topik yang muncul di >=2 artikel
-  const common=Object.entries(freq).filter(([k,v])=>v>=2).sort((a,b)=>b[1]-a[1]).slice(0,25);
+  // ===== 1) TOPIC MATRIX: artikel × topik inti =====
+  let matrixHtml='';
+  if(topics.length){
+    const head=`<tr><th class="mx-num mx-sticky-a">#</th><th class="mx-dom mx-sticky-b">Artikel</th>${topics.map((t,i)=>`<th class="mx-col" data-col="${i}" title="${esc(t.topic)}"><span>${esc(t.topic)}</span></th>`).join('')}<th class="mx-num">Σ</th></tr>`;
+    const body=arts.sort((a,b)=>a.position-b.position).map(pg=>{
+      const ours=ourClean&&pg.domain.includes(ourClean);
+      const kset=articleTopicSet(pg);
+      let tot=0;
+      const cells=topics.map((t,i)=>{const has=kset.has(t.topic);if(has)tot++;return `<td class="mx-cell ${has?'yes':'no'}" data-col="${i}">${has?'✓':''}</td>`;}).join('');
+      return `<tr class="${ours?'ours':''}"><td class="mx-num mx-sticky-a">${pg.position}</td><td class="mx-dom mx-sticky-b"><strong>${esc(pg.domain)}</strong>${ours?' <span class="tag-ours">OURS</span>':''}</td>${cells}<td class="mx-num"><strong>${tot}</strong></td></tr>`;
+    }).join('');
+    const freqRow=`<tr class="mx-freq"><td class="mx-num mx-sticky-a"></td><td class="mx-dom mx-sticky-b"><strong>FREKUENSI</strong></td>${topics.map((t,i)=>{const cls=t.pct>=70?'hot':t.pct>=50?'warm':'';return `<td class="mx-num ${cls}" data-col="${i}" title="${t.freq}/${t.total} = ${t.pct}%">${t.freq}</td>`;}).join('')}<td class="mx-num"></td></tr>`;
+    matrixHtml=`<div class="pd-sub" style="margin-top:0;">Topic Matrix — topik inti × artikel</div>
+      <div class="matrix-wrap" style="max-height:none;margin-bottom:18px;"><table class="dt matrix"><thead>${head}</thead><tbody>${body}${freqRow}</tbody></table></div>`;
+  }
 
-  const cards=perArticle.sort((a,b)=>a.position-b.position).map(a=>`
-    <div class="pd-card">
-      <div class="pd-head"><span class="pd-pos">#${a.position}</span><strong>${esc(a.domain)}</strong><span class="pd-type">${esc(a.label)}</span><span class="pd-src">${a.wc} kata · ${a.topics.length} topik</span></div>
-      <div class="pd-title">${esc(a.title||'')}</div>
-      <div class="pd-sub">Topik yang dibahas (dari H2/H3)</div>
-      <div class="bp-items">${a.topics.length?a.topics.map(t=>`<span class="bp-chip">${esc(t)}</span>`).join(''):'<span class="bp-empty">— heading ga kebaca —</span>'}</div>
-    </div>`).join('');
+  // ===== 2) TOPIC GAP: topik yang sering dibahas, status kita =====
+  let gapHtml='';
+  if(topics.length){
+    const ourSet=ourArt?articleTopicSet(ourArt):null;
+    const rows=topics.map(t=>{
+      const weHave=ourSet?ourSet.has(t.topic):null;
+      let prio,act;
+      if(weHave===null){
+        if(t.pct>=70){prio='🔴 WAJIB';act='Mayoritas artikel bahas ini';}
+        else if(t.pct>=50){prio='🟡 PENTING';act='>50% artikel bahas';}
+        else{prio='🟢 OPSIONAL';act='Sebagian bahas';}
+      }else{
+        if(t.pct>=50&&!weHave){prio='🔴 GAP';act='Banyak kompetitor bahas, kamu belum';}
+        else if(weHave&&t.pct<40){prio='⭐ UNIK';act='Kamu bahas, jarang kompetitor';}
+        else if(weHave){prio='✅ ADA';act='Sudah kamu bahas';}
+        else{prio='🟢 OPSIONAL';act='Sebagian bahas';}
+      }
+      return `<tr><td><strong>${esc(t.topic)}</strong></td><td class="num">${t.freq}/${t.total}</td><td class="num">${t.pct}%</td>${ourSet?`<td>${weHave?'✅':'❌'}</td>`:''}<td><span class="prio">${prio}</span></td><td>${esc(act)}</td></tr>`;
+    }).join('');
+    gapHtml=`<div class="pd-sub">Topic Gap — topik penting & status kamu</div>
+      <table class="dt" style="margin-bottom:18px;"><thead><tr><th>Topik</th><th class="num">Freq</th><th class="num">%</th>${ourArt?'<th>Kita</th>':''}<th>Prioritas</th><th>Catatan</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  // ===== 3) KESIMPULAN =====
+  const avgWc=comps.length?Math.round(comps.reduce((s,a)=>s+(a.word_count||0),0)/comps.length):0;
+  const avgH2=comps.length?Math.round(comps.reduce((s,a)=>s+(a.h2_count||0),0)/comps.length):0;
+  const mustTopics=topics.filter(t=>t.pct>=50).map(t=>t.topic);
+  let ourGapList=[];
+  if(ourArt){const os=articleTopicSet(ourArt);ourGapList=topics.filter(t=>t.pct>=50&&!os.has(t.topic)).map(t=>t.topic);}
+  const concl=`<div class="cmp-gap-box ok" style="display:block;">
+    <strong>📝 Kesimpulan — artikel ideal buat "${esc(p.keyword||'')}"</strong>
+    <div style="margin-top:8px;line-height:1.7;">
+      Dari <b>${comps.length}</b> artikel kompetitor: panjang rata-rata <b>${avgWc} kata</b>, rata-rata <b>${avgH2} sub-judul (H2)</b>.
+      ${mustTopics.length?`<br>Topik yang sebaiknya dibahas (≥50% kompetitor): ${mustTopics.map(t=>`<span class="bp-chip">${esc(t)}</span>`).join(' ')}`:'<br>Belum ada topik dominan yang muncul di mayoritas artikel.'}
+      ${ourArt?(ourGapList.length?`<br><b style="color:var(--danger);">Artikel kamu belum bahas:</b> ${ourGapList.map(t=>`<span class="bp-chip">${esc(t)}</span>`).join(' ')}`:`<br><b style="color:var(--ok);">✅ Artikel kamu sudah mencakup semua topik utama kompetitor.</b>`):'<br><i>Isi "Our URL" dengan artikelmu buat lihat gap spesifik vs kompetitor.</i>'}
+    </div></div>`;
+
+  // ===== 4) per-artikel detail =====
+  const cards=arts.sort((a,b)=>a.position-b.position).map(a=>{
+    const ours=ourClean&&a.domain.includes(ourClean);
+    const tp=[...(a.h2||[]),...(a.h3||[])].map(t=>t.trim()).filter(t=>t.length>3&&t.length<120);
+    return `<div class="pd-card ${ours?'ours':''}">
+      <div class="pd-head"><span class="pd-pos">#${a.position}</span><strong>${esc(a.domain)}</strong>${ours?' <span class="tag-ours">OURS</span>':''}<span class="pd-type">${esc(a.pageType||'')}</span><span class="pd-src">${a.word_count} kata · ${tp.length} sub-judul</span></div>
+      <div class="pd-title">${esc(a.meta_title||'')}</div>
+      <div class="bp-items" style="margin-top:8px;">${tp.length?tp.map(t=>`<span class="bp-chip">${esc(t)}</span>`).join(''):'<span class="bp-empty">— heading ga kebaca —</span>'}</div>
+    </div>`;
+  }).join('');
 
   $('content').innerHTML=`
-    <div class="view-head"><div><h2>Article Topics</h2><div class="view-sub">${arts.length} artikel ter-analisa · topik diambil dari heading H2/H3 tiap artikel</div></div></div>
-    ${common.length?`<div class="cmp-gap-box ok" style="display:block;"><strong>📊 Topik yang dibahas ≥2 artikel (kemungkinan wajib dibahas):</strong><div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">${common.map(([k,v])=>`<span class="bp-chip" title="dibahas ${v} artikel">${esc(k)} <b style="color:var(--acc);">×${v}</b></span>`).join('')}</div></div>`:''}
+    <div class="view-head"><div><h2>Article Topics</h2><div class="view-sub">${arts.length} artikel · ${topics.length} topik inti · basis: keyword heading H2/H3</div></div></div>
+    ${concl}
+    ${matrixHtml}
+    ${gapHtml}
+    <div class="pd-sub">Detail tiap artikel</div>
     <div class="pd-list">${cards}</div>`;
+
+  // hover highlight kolom matrix
+  const tbl=$('content').querySelector('table.matrix');
+  if(tbl){
+    tbl.addEventListener('mouseover',e=>{const c=e.target.closest('[data-col]');tbl.querySelectorAll('.col-hl').forEach(x=>x.classList.remove('col-hl'));if(c){const i=c.dataset.col;tbl.querySelectorAll(`[data-col="${i}"]`).forEach(x=>x.classList.add('col-hl'));}});
+    tbl.addEventListener('mouseleave',()=>tbl.querySelectorAll('.col-hl').forEach(x=>x.classList.remove('col-hl')));
+  }
 }
 
 // ---- Gap Analysis ----
