@@ -991,12 +991,22 @@ function normTopic(s){return (s||'').toLowerCase().replace(/[^\w\s]/g,' ').repla
 
 // ---- Topic clustering (keyword-based, untuk analisa artikel) ----
 const TOPIC_STOP=new Set('yang di ke dari untuk dan atau dengan pada the a an of to for in on is are be it apa cara macam jenis daftar tips rekomendasi terbaik best bagus paling adalah dapat bisa juga akan saat ketika agar supaya itu ini nya kah lah pun mengapa kenapa bagaimana harus sebuah para suatu'.split(/\s+/));
+// Heading yang JELAS bukan topik konten (navigasi/sidebar/footer/related/CTA) — dibuang dari analisa topik
+const NOISE_HEAD=/\b(contact|kontak|hubungi|let'?s get social|ikuti (kami|media)|media sosial|follow us|social|footer|copyright|sitemap|kategori|category|categories|tag|label|arsip|archive|menu|navigasi|navigation|breadcrumb|other news|news ?& ?event|artikel (lain|lainnya|terkait|terbaru)|related|baca juga|you may (interest|like)|popular|terpopuler|terbaru|recent|jangan lewatkan|newsletter|berlangganan|subscribe|download (brosur|brochure)|brosur|leave a (reply|comment)|komentar|comment|share|bagikan|tentang kami|about us|profil perusahaan|company profile|hak cipta|all rights|dapatkan (produk|harga)|official store|tersedia di|beli di|pesan |order |kota|cities|lokasi kami|tahukah anda|berapa harga|harganya|apa sih|keunggulannya)\b/i;
+function isNoiseHeading(h){
+  const t=(h||'').trim();
+  if(!t||t.length<4)return true;
+  if(NOISE_HEAD.test(t))return true;
+  // heading yang isinya cuma nama brand/1 kata pendek kapital (mis. "Alderon") → skip
+  if(t.split(/\s+/).length<=1 && t.length<12)return true;
+  return false;
+}
 function topicKeywords(h){
   return (h||'').toLowerCase().replace(/[^\w\sà-ÿ]/g,' ').split(/\s+/)
     .filter(w=>w.length>=4 && !TOPIC_STOP.has(w) && !/^\d+$/.test(w)).slice(0,4);
 }
 function articleTopicSet(pg){
-  const heads=[...(pg.h2||[]),...(pg.h3||[])];
+  const heads=[...(pg.h2||[]),...(pg.h3||[])].filter(h=>!isNoiseHeading(h));
   const kws=new Set();
   heads.forEach(h=>topicKeywords(h).forEach(k=>kws.add(k)));
   return kws;
@@ -1329,7 +1339,7 @@ function renderTopicsView(p){
   // ===== 4) per-artikel detail =====
   const cards=arts.sort((a,b)=>a.position-b.position).map(a=>{
     const ours=ourClean&&a.domain.includes(ourClean);
-    const tp=[...(a.h2||[]),...(a.h3||[])].map(t=>t.trim()).filter(t=>t.length>3&&t.length<120);
+    const tp=[...(a.h2||[]),...(a.h3||[])].map(t=>t.trim()).filter(t=>t.length>3&&t.length<120&&!isNoiseHeading(t));
     return `<div class="pd-card ${ours?'ours':''}">
       <div class="pd-head"><span class="pd-pos">#${a.position}</span><strong>${esc(a.domain)}</strong>${ours?' <span class="tag-ours">OURS</span>':''}<span class="pd-type">${esc(a.pageType||'')}</span><span class="pd-src">${a.word_count} kata · ${tp.length} sub-judul</span></div>
       <div class="pd-title">${esc(a.meta_title||'')}</div>
