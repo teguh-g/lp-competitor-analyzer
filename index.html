@@ -871,48 +871,60 @@ function detectPageType(doc,url,m){
   const path=(()=>{try{return new URL(url).pathname.toLowerCase();}catch(e){return (url||'').toLowerCase();}})();
   const isHome=path==='/'||path==='';
   const ld=[...doc.querySelectorAll('script[type="application/ld+json"]')].map(s=>s.textContent).join(' ');
-  const hasArticleSchema=/"@type"\s*:\s*"(Article|BlogPosting|NewsArticle)"/i.test(ld);
-  const hasProductSchema=/"@type"\s*:\s*"(Product|Offer|AggregateOffer)"/i.test(ld);
+  const hasArticleSchema=/"@type"\s*:\s*"(Article|BlogPosting|NewsArticle|TechArticle|HowTo|FAQPage)"/i.test(ld);
+  const hasProductSchema=/"@type"\s*:\s*"(Product|Offer|AggregateOffer|Service)"/i.test(ld);
   const heads=(m.h1.join(' ')+' '+m.h2.join(' ')).toLowerCase();
-  const words=m.words||0, forms=m.forms||0, h2n=m.h2.length;
+  const words=m.words||0, forms=m.forms||0;
   const cta=m.cta||0, wa=m.wa||0;
 
-  // ---- skoring artikel vs landing ----
-  let art=0, lp=0;
-  // schema = sinyal kuat
-  if(hasArticleSchema) art+=4;
-  if(hasProductSchema) lp+=4;
-  // URL pattern (sinyal kuat)
-  if(/\/(blog|artikel|article|news|berita|read|baca|tips|panduan|guide|kategori-artikel)\//.test(path)) art+=4;
-  if(/\/(product|produk|shop|store|toko|jual|beli|pricing|harga|layanan|service|katalog|p\/|kursus|course|kelas|program|les|bimbel)\//.test(path)) lp+=3;
-  // judul tipikal artikel
-  if(/\b(\d+\s+(cara|tips|rekomendasi|terbaik|best|daftar|jenis|macam)|cara |how to|tutorial|apa itu|kenapa |mengapa )\b/i.test(heads)) art+=3;
-  // CTA & form & WA = ciri khas LP (artikel murni hampir nol) — sinyal kuat
-  if(forms>=1) lp+=3;
-  if(cta>=5) lp+=3; else if(cta>=2) lp+=2; else if(cta>=1) lp+=1;
-  if(wa>=1) lp+=2;
-  // CTA/harga di heading = LP
-  if(/\b(harga|pricing|paket|biaya|tarif|beli sekarang|order|checkout|daftar sekarang|gratis konsultasi|konsultasi gratis|hubungi kami|coba gratis|trial gratis|book|booking|reservasi)\b/i.test(heads)) lp+=2;
-  // panjang konten — bobot dikecilkan (LP edukasi/jasa sering panjang juga)
-  if(words>=2500) art+=2; else if(words>=1500) art+=1;
-  if(words<500) lp+=1;
-  if(isHome) lp+=2;
-  // tie-breaker: kalau ada CTA/form sama sekali & ga ada sinyal artikel kuat, condong LP
-  if((cta>=1||forms>=1) && !hasArticleSchema && art<4) lp+=1;
+  // helper label
+  const lbl=(kind)=>{
+    if(kind==='article'){
+      if(/\b\d+\s+(cara|tips|rekomendasi|terbaik|best|daftar|jenis|macam)\b/i.test(heads))return 'Listicle';
+      if(/\b(cara|how to|tutorial|panduan|apa itu)\b/i.test(heads))return 'How-to / Guide';
+      return 'Article / Blog';
+    }
+    if(hasProductSchema||/\/(product|produk|p\/|shop|store|item)/.test(path))return 'Product Page';
+    if(isHome)return 'Homepage';
+    return 'Landing Page';
+  };
 
-  const kind = art>lp ? 'article' : 'landing';
-  // label detail untuk tampilan
-  let label;
-  if(kind==='article'){
-    if(/\b\d+\s+(cara|tips|rekomendasi|terbaik|best|daftar|jenis|macam)\b/i.test(heads)) label='Listicle';
-    else if(/\b(cara|how to|tutorial|panduan|apa itu)\b/i.test(heads)) label='How-to / Guide';
-    else label='Article / Blog';
-  }else{
-    if(hasProductSchema||/\/(product|produk|p\/|shop)/.test(path)) label='Product Page';
-    else if(isHome) label='Homepage';
-    else label='Landing Page';
-  }
-  return {kind,label};
+  // ===== 1) URL PATTERN = penentu utama (paling reliable) =====
+  // pola artikel di URL — hampir pasti artikel apa pun CTA-nya (multi-niche)
+  const ART_URL=/\/(blog|blogs|artikel|articles?|news|berita|read|baca|story|stories|post|posts|tips|panduan|guide|tutorial|how-?to|cara-|kategori\/|category\/|categories\/|tag\/|tags\/|wiki|knowledge|edukasi|insight|info|informasi|review|ulasan|rekomendasi|inspirasi|ide|magazine|majalah|jurnal|journal|press|publikasi|faq|tanya|kesehatan\/|tutorials?|learn|belajar\/|tahukah|seputar|mengenal|pengertian|sejarah|manfaat|perbedaan|penyebab|gejala|jenis-)/i;
+  // pola LP/komersil di URL (multi-niche: e-comm, jasa, edukasi, properti, otomotif, dll)
+  const LP_URL=/\/(product|produk|shop|store|toko|jual|beli|buy|cart|keranjang|checkout|pricing|harga|price|layanan|services?|jasa|katalog|catalog|collection|koleksi|item|p\/|c\/|sku|kursus|course|kelas|class|program|paket|package|les|bimbel|promo|diskon|landing|lp\/|daftar|register|signup|sign-up|booking|pesan|order|reservasi|sewa|rental|kredit|simulasi|brosur|spesifikasi|dealer|cabang|outlet|gallery-produk)/i;
+  const artUrl=ART_URL.test(path), lpUrl=LP_URL.test(path);
+  // sinyal pendukung: ANGKA di slug akhir (umum di artikel: tahun / "10-tips" / "-2026")
+  //   tapi NOT di pola produk (kode/varian) — makanya cuma dipakai saat URL ga jelas LP
+  const lastSeg=path.replace(/\/$/,'').split('/').pop()||'';
+  const hasYearOrListNum=/(^|[-_])(19|20)\d{2}([-_]|$)/.test(lastSeg) || /(^|[-_])\d{1,2}[-_](cara|tips|rekomendasi|jenis|macam|hal|alasan|langkah|trik|ide|merk|merek|pilihan|terbaik|cara2)/i.test(lastSeg);
+  // kalau URL JELAS salah satu (dan ga dua-duanya), itu keputusan final
+  if(artUrl && !lpUrl) return {kind:'article',label:lbl('article')};
+  if(lpUrl && !artUrl) return {kind:'landing',label:lbl('landing')};
+  // angka tahun/list di slug + ga ada sinyal LP → kemungkinan besar artikel
+  if(hasYearOrListNum && !lpUrl) return {kind:'article',label:lbl('article')};
+
+  // ===== 2) SCHEMA = penentu kedua (kalau URL ga jelas) =====
+  if(hasArticleSchema && !hasProductSchema) return {kind:'article',label:lbl('article')};
+  if(hasProductSchema && !hasArticleSchema) return {kind:'landing',label:lbl('landing')};
+
+  // ===== 3) HOMEPAGE biasanya LP =====
+  if(isHome) return {kind:'landing',label:lbl('landing')};
+
+  // ===== 4) AMBIGU → skoring sinyal konten =====
+  let art=0, lp=0;
+  if(/\b(\d+\s+(cara|tips|rekomendasi|terbaik|best|daftar|jenis|macam)|cara |how to|tutorial|apa itu|kenapa |mengapa |pengertian|penjelasan)\b/i.test(heads)) art+=3;
+  if(words>=2000) art+=2; else if(words>=1200) art+=1;
+  // CTA/form/WA = sinyal LP, tapi bobot moderat (header/footer situs sering punya ini)
+  if(forms>=1) lp+=2;
+  if(cta>=6) lp+=3; else if(cta>=3) lp+=2; else if(cta>=1) lp+=1;
+  if(wa>=1) lp+=1;
+  if(/\b(harga|pricing|paket|biaya|tarif|beli sekarang|order|checkout|daftar sekarang|konsultasi gratis|hubungi kami|coba gratis|trial gratis|booking|reservasi|pesan sekarang)\b/i.test(heads)) lp+=2;
+  if(words<400) lp+=1;
+
+  const kind = art>=lp ? 'article' : 'landing'; // saat seri → condong artikel (konten ambigu biasanya konten/info)
+  return {kind,label:lbl(kind)};
 }
 
 // ---- Deteksi balasan anti-bot / halaman kosong (BLOCKED) ----
