@@ -8,26 +8,26 @@
 <meta name="author" content="Teguh Gunawan, S.Li.">
 <meta name="description" content="LP Competitor Analyzer — SERP top 10 landing page gap analysis by Teguh Gunawan, S.Li.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230b0e13'/><rect x='6' y='16' width='4' height='10' rx='1' fill='%2334d399'/><rect x='13' y='10' width='4' height='16' rx='1' fill='%234a90ff'/><rect x='20' y='6' width='4' height='20' rx='1' fill='%23f59e0b'/></svg>">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:#0b0e13;--s1:#12161e;--s2:#1a1f2b;--s3:#232a38;
-  --bd:#2a3040;--bd2:#3d4860;
-  --t:#e4e8f0;--td:#8892a4;--tf:#5a6478;
-  --acc:#4a90ff;--accBg:rgba(74,144,255,.08);--accBd:rgba(74,144,255,.25);
-  --warn:#f59e0b;--warnBg:rgba(245,158,11,.08);--warnBd:rgba(245,158,11,.25);
-  --ok:#34d399;--okBg:rgba(52,211,153,.08);--okBd:rgba(52,211,153,.25);
-  --danger:#ef4444;
-  --r:10px;--rs:6px;--f:'DM Sans',sans-serif;--m:'Space Mono',monospace;
+  --bg:#0a0d12;--s1:#141923;--s2:#1e2530;--s3:#2a3340;
+  --bd:#36404f;--bd2:#4a5468;
+  --t:#f4f6fa;--td:#a4adbd;--tf:#717c90;
+  --acc:#5b9bff;--accBg:rgba(91,155,255,.14);--accBd:rgba(91,155,255,.4);
+  --warn:#fbb528;--warnBg:rgba(251,181,40,.14);--warnBd:rgba(251,181,40,.4);
+  --ok:#3ee0a4;--okBg:rgba(62,224,164,.14);--okBd:rgba(62,224,164,.4);
+  --danger:#ff5a5a;
+  --r:10px;--rs:6px;--f:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;--m:'JetBrains Mono','SF Mono',Menlo,Consolas,'Courier New',monospace;
 }
 [data-theme="light"]{
-  --bg:#ffffff;--s1:#ffffff;--s2:#f7f8fa;--s3:#eef1f5;
-  --bd:#e5e8ed;--bd2:#c8cdd6;
-  --t:#0f1419;--td:#5e6773;--tf:#9aa3af;
-  --acc:#2563eb;--accBg:rgba(37,99,235,.06);--accBd:rgba(37,99,235,.22);
-  --warn:#d97706;--warnBg:rgba(217,119,6,.06);--warnBd:rgba(217,119,6,.22);
-  --ok:#059669;--okBg:rgba(5,150,105,.06);--okBd:rgba(5,150,105,.22);
-  --danger:#dc2626;
+  --bg:#ffffff;--s1:#ffffff;--s2:#f1f3f7;--s3:#e4e8ee;
+  --bd:#d2d8e0;--bd2:#a8b1bf;
+  --t:#0a0e14;--td:#4a5360;--tf:#7b8493;
+  --acc:#1d4ed8;--accBg:rgba(29,78,216,.10);--accBd:rgba(29,78,216,.35);
+  --warn:#b45309;--warnBg:rgba(180,83,9,.10);--warnBd:rgba(180,83,9,.35);
+  --ok:#047857;--okBg:rgba(4,120,87,.10);--okBd:rgba(4,120,87,.35);
+  --danger:#c41f1f;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--t);font-family:var(--f);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
@@ -205,18 +205,12 @@ button{font-family:var(--f);}
 .tag-block{font-size:8px;font-family:var(--m);font-weight:700;background:#7c3aed;color:#fff;padding:1px 5px;border-radius:3px;letter-spacing:.5px;}
 .tag-skip2{font-size:8px;font-family:var(--m);font-weight:700;background:var(--s2);color:var(--td);border:1px solid var(--bd);padding:1px 5px;border-radius:3px;letter-spacing:.3px;}
 
-/* INFO PANEL (kenapa ga ke-crawl) */
-.info-panel{margin-top:10px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--s1);overflow:hidden;}
-.info-panel summary{cursor:pointer;padding:9px 11px;font-size:11px;font-weight:600;color:var(--td);list-style:none;user-select:none;}
-.info-panel summary::-webkit-details-marker{display:none;}
-.info-panel summary:hover{color:var(--t);background:var(--s2);}
-.info-panel[open] summary{border-bottom:1px solid var(--bd);color:var(--t);}
-.info-body{padding:11px;font-size:10.5px;line-height:1.6;color:var(--td);}
-.info-body p{margin:0 0 9px;}
-.info-row{display:block;margin-bottom:8px;padding-left:2px;}
-.info-row span{margin-right:5px;vertical-align:middle;}
-.info-note{margin-top:10px!important;padding:9px;background:var(--accBg);border:1px solid var(--accBd);border-radius:var(--rs);color:var(--t);}
-.info-body code{font-family:var(--m);font-size:9.5px;background:var(--s2);padding:1px 4px;border-radius:3px;}
+/* INFO ROWS (status crawl — di modal Help) */
+.info-row{display:block;margin:8px 0;padding-left:2px;font-size:11px;line-height:1.6;color:var(--td);}
+.info-row span{margin-right:6px;vertical-align:middle;}
+.info-note{margin-top:12px;padding:10px 12px;background:var(--accBg);border:1px solid var(--accBd);border-radius:var(--rs);color:var(--t);font-size:11px;line-height:1.6;}
+#helpMo .md{max-width:540px;}
+#helpMo code{font-family:var(--m);font-size:10px;background:var(--s2);padding:1px 5px;border-radius:3px;color:var(--acc);}
 
 /* GAP priority row colors */
 .dt tr.p-crit td:first-child{box-shadow:inset 3px 0 var(--danger);}
@@ -340,6 +334,9 @@ button{font-family:var(--f);}
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Push</span>
     </button>
     <span class="sep"></span>
+    <button class="btn btn-g btn-sm" onclick="openHelpMo()" title="Kenapa ada URL yang ga ke-crawl?">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Status</span>
+    </button>
     <button class="btn btn-g btn-sm" onclick="openSettings()" title="API settings">
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span>
     </button>
@@ -384,19 +381,6 @@ button{font-family:var(--f);}
         <div class="hint">Gemini = 1 RPD per website. Pilih lebih sedikit buat hemat kuota. Platform (IG/dll) ga dihitung.</div>
       </div>
       <button class="btn btn-p" onclick="runAnalysis()">Run Analysis</button>
-
-      <details class="info-panel">
-        <summary>❓ Kenapa ada URL yang ga ke-crawl?</summary>
-        <div class="info-body">
-          <p>Tiap hasil SERP tetap <strong>ditampilkan</strong>, tapi belum tentu di-crawl. Ada 5 status:</p>
-          <div class="info-row"><span class="tag-web">Website</span> Berhasil di-crawl & section ke-detect. Inilah yang dihitung di Gap & Benchmark.</div>
-          <div class="info-row"><span class="tag-plat">Platform</span> Non-website (Instagram, TikTok, YouTube, Wikipedia, marketplace, forum). Sengaja di-skip — ini bukan landing page, jadi ga relevan buat analisa LP. Ga dihitung gap.</div>
-          <div class="info-row"><span class="tag-block">BLOCKED</span> Situs nolak kasih HTML. Penyebabnya: proteksi anti-bot (Cloudflare "Just a moment", 403 Forbidden, CAPTCHA), atau halaman yang kontennya dirender JavaScript (HTML mentah-nya kosong). Sering kejadian di e-commerce besar / situs perhiasan / marketplace. Di-exclude dari gap biar angka ga melenceng.</div>
-          <div class="info-row"><span class="tag-fail">FAIL</span> Error teknis pas ambil halaman: timeout (situs lambat &gt;20 detik), koneksi putus, atau Worker error.</div>
-          <div class="info-row"><span class="tag-skip2">not crawled</span> Sengaja dilewati karena di luar limit "Crawl berapa URL" yang kamu pilih (mis. Top 5 → website ke-6+ ga di-crawl, buat hemat RPD). Naikkan limit kalau mau ikutkan.</div>
-          <p class="info-note">💡 <strong>BLOCKED itu batas teknis, bukan bug.</strong> Tool ini jalan di browser + Cloudflare Worker yang ambil HTML mentah — sama seperti <code>requests</code> di Python. Situs anti-bot kuat memang dirancang menahan ini; butuh headless browser (berat/berbayar) buat nembus. Wajar kalau 1-2 dari 10 situs ke-BLOCKED — fokus aja ke yang berhasil, sampelnya tetap representatif.</p>
-        </div>
-      </details>
     </div>
   </aside>
 
@@ -482,11 +466,12 @@ button{font-family:var(--f);}
       <div class="hint">Default tetap 2.5 Flash. Model 3.x lebih pintar tapi cek limit/harga di akun AI Studio kamu.</div>
     </div>
     <div class="key-list" id="aiKeyList"></div>
-    <div class="key-add">
-      <input type="text" class="kname" id="aiKeyName" placeholder="Nama (mis. Brand A)">
-      <input type="password" id="aiKeyVal" placeholder="AIzaSy...">
+    <div class="ir">
+      <div class="ig"><label>Nama (label)</label><input type="text" id="aiKeyName" placeholder="mis. Brand A"></div>
+      <div class="ig"><label>API Key</label><input type="password" id="aiKeyVal" placeholder="AIzaSy..."></div>
     </div>
     <button class="btn btn-g btn-sm" onclick="addAiKey()" style="width:100%;margin-top:5px;">+ Simpan Gemini key</button>
+    <div class="hint">Key disimpan lokal di browser ini. Tambah beberapa key buat gilir kuota (RPD).</div>
 
     <div class="field-lbl">Quota hari ini (key + model aktif)</div>
     <div class="quota-row">
@@ -548,6 +533,24 @@ button{font-family:var(--f);}
       <div style="flex:1"></div>
       <button class="btn btn-g btn-sm" onclick="closeSyncMo()">Cancel</button>
       <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="syncSaveCfg()">Save Config</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== HELP / STATUS MODAL ===================== -->
+<div class="mo" id="helpMo">
+  <div class="md">
+    <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Status crawl — kenapa ada yang ga ke-crawl?</h3>
+    <div class="sub">Tiap hasil SERP tetap ditampilkan, tapi belum tentu di-crawl. Ada 5 status:</div>
+    <div class="info-row"><span class="tag-web">Website</span> Berhasil di-crawl & section ke-detect. Inilah yang dihitung di Gap &amp; Benchmark.</div>
+    <div class="info-row"><span class="tag-plat">Platform</span> Non-website (Instagram, TikTok, YouTube, Wikipedia, marketplace, forum). Sengaja di-skip — bukan landing page, ga relevan buat analisa LP. Ga dihitung gap.</div>
+    <div class="info-row"><span class="tag-block">BLOCKED</span> Situs nolak kasih HTML: proteksi anti-bot (Cloudflare "Just a moment", 403, CAPTCHA) atau konten dirender JavaScript (HTML mentah kosong). Sering di e-commerce besar / perhiasan / marketplace. Di-exclude dari gap biar angka ga melenceng.</div>
+    <div class="info-row"><span class="tag-fail">FAIL</span> Error teknis pas ambil halaman: timeout (&gt;20 detik), koneksi putus, atau Worker error.</div>
+    <div class="info-row"><span class="tag-skip2">not crawled</span> Sengaja dilewati karena di luar limit "Crawl berapa URL" (mis. Top 5 → website ke-6+ ga di-crawl, hemat RPD). Naikkan limit kalau mau ikutkan.</div>
+    <p class="info-note">💡 <strong>BLOCKED itu batas teknis, bukan bug.</strong> Tool ambil HTML mentah lewat Cloudflare Worker — sama seperti <code>requests</code> di Python. Situs anti-bot kuat memang dirancang menahan ini; butuh headless browser (berat/berbayar) buat nembus. Wajar 1-2 dari 10 situs ke-BLOCKED — fokus ke yang berhasil, sampelnya tetap representatif.</p>
+    <div class="btn-row">
+      <div style="flex:1"></div>
+      <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="closeHelpMo()">Paham</button>
     </div>
   </div>
 </div>
@@ -1615,9 +1618,23 @@ async function testAi(){
 // ---------- Sync ----------
 function openSyncMo(){$('syncTok').value=syncCfg.token;$('syncGid').value=syncCfg.gistId;$('syncAuto').checked=!!syncCfg.autoPush;$('syncMo').classList.add('active');}
 function closeSyncMo(){$('syncMo').classList.remove('active');}
+function openHelpMo(){$('helpMo').classList.add('active');}
+function closeHelpMo(){$('helpMo').classList.remove('active');}
 function saveSync(){try{localStorage.setItem(LS_SYNC,JSON.stringify(syncCfg));}catch(e){}}
+function parseGistId(raw){
+  let v=(raw||'').trim();
+  // kalau user paste URL penuh (https://gist.github.com/user/ID), ambil ID-nya saja
+  const m=v.match(/gist\.github\.com\/(?:[^/]+\/)?([0-9a-f]+)/i);
+  if(m)return m[1];
+  // kalau ada slash lain, ambil segmen terakhir yang mirip ID
+  const seg=v.split('/').filter(Boolean).pop()||v;
+  return seg.replace(/[^0-9a-zA-Z]/g,'');
+}
 function syncSaveCfg(){
-  syncCfg.token=$('syncTok').value.trim();syncCfg.gistId=$('syncGid').value.trim();syncCfg.autoPush=$('syncAuto').checked;
+  syncCfg.token=$('syncTok').value.trim();
+  syncCfg.gistId=parseGistId($('syncGid').value);
+  $('syncGid').value=syncCfg.gistId; // tampilkan hasil bersihnya
+  syncCfg.autoPush=$('syncAuto').checked;
   if(!syncCfg.token||!syncCfg.gistId){toast('Token & Gist ID wajib diisi','err');return;}
   saveSync();updateStatusPills();closeSyncMo();toast('Sync configured! Coba Push.');
 }
@@ -1769,10 +1786,10 @@ function exportMatrixImg(fmt){
   const W=padX*2+labelW+names.length*colW+34;
   const H=padY+headH+rows.length*rowH+rowH+24;
   const freq=names.map(n=>ok.filter(pg=>pg.sections&&pg.sections[n]).length);
-  let s=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="DM Sans, sans-serif">`;
+  let s=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Inter, sans-serif">`;
   s+=`<rect width="${W}" height="${H}" fill="${bg}"/>`;
   s+=`<text x="${padX}" y="26" fill="${fg}" font-size="15" font-weight="700">Section Matrix — ${esc(p.keyword||'')}</text>`;
-  s+=`<text x="${padX}" y="44" fill="${sub}" font-size="10" font-family="Space Mono, monospace">${ok.length} website · 18 section · ${new Date().toLocaleDateString('id-ID')}</text>`;
+  s+=`<text x="${padX}" y="44" fill="${sub}" font-size="10" font-family="JetBrains Mono, monospace">${ok.length} website · 18 section · ${new Date().toLocaleDateString('id-ID')}</text>`;
   const x0=padX+labelW,y0=padY+headH;
   // header labels (vertical)
   names.forEach((n,i)=>{const cx=x0+i*colW+colW/2;s+=`<text x="${cx}" y="${y0-6}" fill="${sub}" font-size="9" transform="rotate(-90 ${cx} ${y0-6})" text-anchor="start">${esc(secAbbr(n))}</text>`;});
@@ -1788,7 +1805,7 @@ function exportMatrixImg(fmt){
   const fy=y0+rows.length*rowH;
   s+=`<text x="${padX}" y="${fy+rowH/2+3}" fill="${sub}" font-size="9" font-weight="700">FREKUENSI</text>`;
   freq.forEach((c,i)=>{const pct=ok.length?c/ok.length:0;const col=pct>=.7?hot:pct>=.5?warm:sub;const cx=x0+i*colW;s+=`<text x="${cx+(colW-2)/2}" y="${fy+rowH/2+3}" fill="${col}" font-size="10" font-weight="700" text-anchor="middle">${c}</text>`;});
-  s+=`<text x="${W-padX}" y="${H-8}" fill="${sub}" font-size="8" font-family="Space Mono, monospace" text-anchor="end">LP Competitor Analyzer · Teguh Gunawan, S.Li.</text>`;
+  s+=`<text x="${W-padX}" y="${H-8}" fill="${sub}" font-size="8" font-family="JetBrains Mono, monospace" text-anchor="end">LP Competitor Analyzer · Teguh Gunawan, S.Li.</text>`;
   s+=`</svg>`;
 
   if(fmt==='svg'){dlBlob(safeName(p.keyword)+'-matrix.svg',new Blob([s],{type:'image/svg+xml'}));toast('SVG matrix diunduh!');return;}
