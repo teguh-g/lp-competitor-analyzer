@@ -924,10 +924,18 @@ function detectPageType(doc,url,m){
   // pola LP/komersil di URL (multi-niche: e-comm, jasa, edukasi, properti, otomotif, dll)
   const LP_URL=/\/(product|produk|shop|store|toko|jual|beli|buy|cart|keranjang|checkout|pricing|harga|price|layanan|services?|jasa|katalog|catalog|collection|koleksi|item|p\/|c\/|sku|kursus|course|kelas|class|program|paket|package|les|bimbel|promo|diskon|landing|lp\/|daftar|register|signup|sign-up|booking|pesan|order|reservasi|sewa|rental|kredit|simulasi|brosur|spesifikasi|dealer|cabang|outlet|gallery-produk|(pria|wanita|men|women|kids|anak)-(sepatu|baju|pakaian|tas|celana|sandal|jaket|kaos|shoes|clothing|apparel|bags?)|(sepatu|baju|tas|celana|sandal|jaket)-(pria|wanita|men|women|anak))/i;
   const artUrl=ART_URL.test(path), lpUrl=LP_URL.test(path);
+  // pola LP "lemah" (promosi/diskon/landing) — sering dipakai utk artikel marketing juga
+  const LP_URL_WEAK=/\/(promo|promosi|diskon|landing|lp\/|sale|deals?)/i;
+  const lpWeak=LP_URL_WEAK.test(path) && !/\/(product|produk|shop|store|toko|checkout|cart|p\/|c\/|item|katalog|kategori)/i.test(path);
+  // title listicle SANGAT kuat: angka + kata listicle (mis "7 Rekomendasi Sepatu Nike Terbaik")
+  const STRONG_LIST=/^\s*\d{1,3}\s+\w+.*\b(rekomendasi|terbaik|terlaris|terlengkap|teratas|terpopuler|best|tips|pilihan|review|jenis|macam|cara)\b|\b(rekomendasi|tips|cara)\b.*\b\d{1,3}\b/i;
   // sinyal pendukung: ANGKA di slug akhir (umum di artikel: tahun / "10-tips" / "3-sepatu")
   const lastSeg=path.replace(/\/$/,'').split('/').pop()||'';
-  // tahun, ATAU angka+kata di AWAL slug (mis "3-sepatu-adidas-terlaris", "10-tips") = listicle
   const hasYearOrListNum=/(^|[-_])(19|20)\d{2}([-_]|$)/.test(lastSeg) || /^\d{1,3}[-_][a-z]/i.test(lastSeg);
+
+  // title listicle kuat menang atas URL LP LEMAH (promosi/diskon) — kasus blibli /promosi/7-rekomendasi
+  if(STRONG_LIST.test(title) && lpWeak) return {kind:'article',label:lbl('article')};
+
   // kalau URL JELAS salah satu (dan ga dua-duanya), itu keputusan final
   if(artUrl && !lpUrl) return {kind:'article',label:lbl('article')};
   if(lpUrl && !artUrl) return {kind:'landing',label:lbl('landing')};
@@ -935,9 +943,8 @@ function detectPageType(doc,url,m){
   if(hasYearOrListNum && !lpUrl) return {kind:'article',label:lbl('article')};
 
   // ===== 1b) JUDUL = sinyal kuat (cek title, bukan cuma URL) =====
-  // judul jelas artikel ("9 Software ERP Terbaik 2026", "...Guide (2026)", "Review...")
-  // & URL ga ada pola LP & judul ga komersil → artikel
-  if(TITLE_ART.test(title) && !lpUrl && !TITLE_LP.test(title)) return {kind:'article',label:lbl('article')};
+  // judul jelas artikel & URL ga ada pola LP (kuat) & judul ga komersil → artikel
+  if(TITLE_ART.test(title) && (!lpUrl||lpWeak) && !TITLE_LP.test(title)) return {kind:'article',label:lbl('article')};
 
   // ===== 2) SCHEMA = penentu kedua (kalau URL ga jelas) =====
   if(hasArticleSchema && !hasProductSchema) return {kind:'article',label:lbl('article')};
