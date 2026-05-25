@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>LP Competitor Analyzer</title>
+<meta name="author" content="Teguh Gunawan, S.Li.">
+<meta name="description" content="LP Competitor Analyzer — SERP top 10 landing page gap analysis by Teguh Gunawan, S.Li.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230b0e13'/><rect x='6' y='16' width='4' height='10' rx='1' fill='%2334d399'/><rect x='13' y='10' width='4' height='16' rx='1' fill='%234a90ff'/><rect x='20' y='6' width='4' height='20' rx='1' fill='%23f59e0b'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0b0e13;--s1:#12161e;--s2:#1a1f2b;--s3:#232a38;
+  --bd:#2a3040;--bd2:#3d4860;
+  --t:#e4e8f0;--td:#8892a4;--tf:#5a6478;
+  --acc:#4a90ff;--accBg:rgba(74,144,255,.08);--accBd:rgba(74,144,255,.25);
+  --warn:#f59e0b;--warnBg:rgba(245,158,11,.08);--warnBd:rgba(245,158,11,.25);
+  --ok:#34d399;--okBg:rgba(52,211,153,.08);--okBd:rgba(52,211,153,.25);
+  --danger:#ef4444;
+  --r:10px;--rs:6px;--f:'DM Sans',sans-serif;--m:'Space Mono',monospace;
+}
+[data-theme="light"]{
+  --bg:#ffffff;--s1:#ffffff;--s2:#f7f8fa;--s3:#eef1f5;
+  --bd:#e5e8ed;--bd2:#c8cdd6;
+  --t:#0f1419;--td:#5e6773;--tf:#9aa3af;
+  --acc:#2563eb;--accBg:rgba(37,99,235,.06);--accBd:rgba(37,99,235,.22);
+  --warn:#d97706;--warnBg:rgba(217,119,6,.06);--warnBd:rgba(217,119,6,.22);
+  --ok:#059669;--okBg:rgba(5,150,105,.06);--okBd:rgba(5,150,105,.22);
+  --danger:#dc2626;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--t);font-family:var(--f);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px;}
+button{font-family:var(--f);}
+
+/* HEADER */
+.hdr{padding:12px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--s1);flex-shrink:0;}
+.hdr h1{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.hdr-dot{width:6px;height:6px;background:var(--acc);border-radius:50%;box-shadow:0 0 8px var(--acc);}
+.hdr-actions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
+.hdr-actions .sep{width:1px;height:18px;background:var(--bd);margin:0 3px;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 12px;border:none;border-radius:var(--rs);font-size:11px;font-weight:600;cursor:pointer;transition:all .12s;}
+.btn .ic{width:13px;height:13px;flex-shrink:0;vertical-align:-2px;}
+.btn-sm{padding:5px 9px;font-size:10px;}
+.btn-p{background:var(--acc);color:#fff;width:100%;}.btn-p:hover{background:#3a7dee;}
+.btn-g{background:var(--s2);color:var(--t);border:1px solid var(--bd2);font-weight:500;}
+.btn-g:hover{background:var(--s3);border-color:var(--acc);color:var(--acc);}
+.btn-d{background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,.2);}.btn-d:hover{background:rgba(239,68,68,.08);}
+.btn-acc{background:var(--accBg);border:1px solid var(--accBd);color:var(--acc);}.btn-acc:hover{background:rgba(74,144,255,.15);border-color:var(--acc);}
+[data-theme="light"] .btn-g{background:#fff;border-color:#cbd5e1;color:#1f2937;}
+[data-theme="light"] .btn-g:hover{background:#eff6ff;border-color:var(--acc);color:var(--acc);}
+[data-theme="light"] .btn-acc{background:#dbeafe;border-color:#93c5fd;color:#1e40af;}
+.theme-tog{padding:5px 8px;background:transparent;border:1px solid var(--bd);color:var(--td);border-radius:var(--rs);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;}
+.theme-tog:hover{border-color:var(--bd2);color:var(--t);}
+.theme-tog .ic{width:14px;height:14px;}
+
+/* STATUS PILLS in header */
+.st-pill{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--td);font-family:var(--m);padding:4px 10px;border-right:1px solid var(--bd);cursor:pointer;}
+.st-pill:hover{color:var(--t);}
+.st-pill .sd{width:6px;height:6px;border-radius:50%;}
+.st-pill.off .sd{background:var(--tf);}
+.st-pill.on .sd{background:var(--ok);box-shadow:0 0 6px var(--ok);}
+.st-pill.busy .sd{background:var(--warn);animation:pulse 1s infinite;}
+.st-pill.err .sd{background:var(--danger);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:240px 1fr;flex:1;overflow:hidden;}
+.side{border-right:1px solid var(--bd);display:flex;flex-direction:column;background:var(--s1);overflow-y:auto;}
+.main{display:flex;flex-direction:column;overflow:hidden;}
+
+/* SIDE SECTIONS */
+.side-sec{padding:14px 16px;border-bottom:1px solid var(--bd);flex-shrink:0;}
+.side-sec h3{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--td);margin-bottom:10px;display:flex;align-items:center;gap:6px;justify-content:space-between;}
+.side-sec h3 svg{width:12px;height:12px;}
+.ig{margin-bottom:8px;}
+.ig label{display:block;font-size:10px;font-weight:500;color:var(--td);margin-bottom:3px;}
+.ig input,.ig select,.ig textarea{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t);font-family:var(--f);font-size:11px;padding:7px 9px;outline:none;transition:border .15s;}
+.ig input:focus,.ig select:focus,.ig textarea:focus{border-color:var(--acc);}
+.ir{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.hint{font-size:9px;color:var(--tf);font-family:var(--m);margin-top:4px;line-height:1.4;}
+
+/* PROJECTS LIST */
+.proj-item{padding:8px 10px;border-radius:var(--rs);cursor:pointer;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:500;transition:background .12s;margin-bottom:2px;position:relative;}
+.proj-item:hover{background:var(--s2);}
+.proj-item.active{background:var(--s2);border-left:2px solid var(--acc);}
+.proj-item svg{flex-shrink:0;color:var(--td);width:13px;height:13px;}
+.proj-item .p-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.proj-item .p-meta{font-family:var(--m);font-size:9px;color:var(--tf);}
+.proj-item .p-acts{display:none;gap:4px;position:absolute;right:8px;background:var(--s2);}
+.proj-item:hover .p-acts{display:flex;}
+.p-acts button{background:none;border:none;color:var(--td);cursor:pointer;padding:2px;}
+.p-acts button:hover{color:var(--danger);}
+.p-acts svg{width:11px;height:11px;}
+
+/* MAIN TOOLBAR */
+.tb{padding:8px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--s1);flex-shrink:0;gap:10px;}
+.vt{display:flex;background:var(--s2);border-radius:var(--rs);overflow:hidden;border:1px solid var(--bd);flex-wrap:wrap;}
+.vt button{background:none;border:none;color:var(--td);font-family:var(--f);font-size:10px;font-weight:500;padding:6px 11px;cursor:pointer;transition:all .12s;white-space:nowrap;}
+.vt button.active{background:var(--acc);color:#fff;}
+.tb-r{display:flex;gap:5px;align-items:center;}
+
+/* CONTENT AREA */
+.content{flex:1;overflow:auto;padding:22px;}
+.es{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--td);text-align:center;padding:30px;gap:12px;}
+.es svg{opacity:.6;}
+.es h4{font-size:14px;color:var(--t);}
+.es p{font-size:12px;max-width:340px;line-height:1.5;}
+
+/* STATUS BAR */
+.sb{padding:8px 16px;border-top:1px solid var(--bd);display:flex;gap:16px;font-size:10px;color:var(--td);background:var(--s1);flex-shrink:0;flex-wrap:wrap;align-items:center;}
+.sb .st span{color:var(--t);font-weight:600;font-family:var(--m);}
+.sb .credit{margin-left:auto;font-family:var(--m);font-size:9px;color:var(--tf);}
+
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);z-index:1000;display:none;align-items:center;justify-content:center;}
+.mo.active{display:flex;}
+.md{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);width:480px;max-width:94vw;max-height:88vh;overflow-y:auto;padding:18px;}
+.md h3{font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.md h3 svg{width:16px;height:16px;}
+.md .sub{font-size:11px;color:var(--td);margin-bottom:14px;line-height:1.5;}
+.md hr{border:none;border-top:1px solid var(--bd);margin:14px 0;}
+.md a{color:var(--acc);text-decoration:none;}.md a:hover{text-decoration:underline;}
+.md code{background:var(--s2);padding:1px 5px;border-radius:3px;font-family:var(--m);font-size:10px;color:var(--acc);}
+.btn-row{display:flex;gap:6px;margin-top:16px;align-items:center;}
+.field-lbl{font-size:10px;font-weight:600;color:var(--t);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 7px;}
+
+/* MULTI-KEY LIST */
+.key-list{display:flex;flex-direction:column;gap:4px;margin-bottom:6px;}
+.key-row{display:flex;align-items:center;gap:7px;padding:6px 8px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--s2);}
+.key-row.active{border-color:var(--acc);background:var(--accBg);}
+.key-row input[type=radio]{width:auto;cursor:pointer;accent-color:var(--acc);}
+.key-row .kn{flex:1;font-size:11px;color:var(--t);cursor:pointer;}
+.key-row .ku{font-family:var(--m);font-size:9px;color:var(--tf);}
+.key-row .kdel{background:none;border:none;color:var(--danger);font-size:15px;font-weight:bold;cursor:pointer;padding:0 4px;line-height:1;}
+.key-add{display:flex;gap:6px;}
+.key-add input.kname{flex:0 0 38%;}
+.key-empty{font-size:10px;color:var(--tf);font-family:var(--m);padding:4px 2px;}
+
+/* DISCLAIMER box */
+.disc{background:var(--warnBg);border:1px solid var(--warnBd);border-radius:var(--rs);padding:9px 11px;font-size:10px;color:var(--warn);line-height:1.5;display:flex;gap:7px;}
+.disc svg{width:14px;height:14px;flex-shrink:0;margin-top:1px;}
+
+/* QUOTA bar */
+.quota-row{display:flex;align-items:center;gap:8px;font-size:10px;margin-bottom:6px;font-family:var(--m);color:var(--td);}
+.quota-bar{flex:1;height:8px;background:var(--s2);border-radius:4px;overflow:hidden;}
+.quota-fill{height:100%;background:var(--acc);border-radius:4px;transition:width .3s;}
+.quota-fill.warn{background:var(--danger);}
+.quota-lbl{flex:0 0 90px;}
+.quota-val{flex:0 0 80px;text-align:right;color:var(--t);font-weight:600;}
+
+/* DATA TABLE */
+.view-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap;}
+.view-head h2{font-size:15px;font-weight:700;}
+.view-sub{font-size:10px;color:var(--td);font-family:var(--m);margin-top:3px;}
+.dt{width:100%;border-collapse:collapse;font-size:11px;}
+.dt th{text-align:left;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--td);padding:8px 9px;border-bottom:2px solid var(--bd);position:sticky;top:-22px;background:var(--bg);z-index:1;}
+.dt td{padding:8px 9px;border-bottom:1px solid var(--bd);vertical-align:top;}
+.dt tr:hover td{background:var(--s1);}
+.dt .num{text-align:right;font-family:var(--m);white-space:nowrap;width:40px;}
+.dt .snip{color:var(--td);max-width:300px;font-size:10px;line-height:1.5;}
+.dt .urlc{font-family:var(--m);font-size:10px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dt .urlc a{color:var(--acc);text-decoration:none;}.dt .urlc a:hover{text-decoration:underline;}
+.dt tr.ours td{background:var(--okBg);}
+.dt tr.ours:hover td{background:var(--okBg);}
+.tag-ours{font-size:8px;font-family:var(--m);font-weight:700;background:var(--ok);color:#031b12;padding:1px 5px;border-radius:3px;letter-spacing:.5px;}
+[data-theme="light"] .tag-ours{color:#fff;}
+
+/* MATRIX — redesigned */
+.matrix-wrap{overflow:auto;border:1px solid var(--bd);border-radius:var(--r);max-height:calc(100vh - 230px);}
+.dt.matrix{border-collapse:separate;border-spacing:0;font-size:11px;}
+.dt.matrix th,.dt.matrix td{border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);}
+.dt.matrix thead th{position:sticky;top:0;z-index:3;background:var(--s2);}
+.dt.matrix th.mx-col{width:40px;min-width:40px;max-width:40px;height:64px;padding:0;text-align:center;vertical-align:bottom;cursor:default;}
+.dt.matrix th.mx-col span{display:block;writing-mode:vertical-rl;transform:rotate(180deg);margin:0 auto 8px;font-size:9px;font-weight:600;letter-spacing:.3px;text-transform:none;color:var(--td);white-space:nowrap;}
+.dt.matrix th.mx-num,.dt.matrix td.mx-num{width:34px;min-width:34px;text-align:center;font-family:var(--m);}
+.dt.matrix th.mx-dom,.dt.matrix td.mx-dom{min-width:180px;text-align:left;padding:7px 10px;}
+/* sticky first two columns */
+.dt.matrix .mx-sticky-a{position:sticky;left:0;z-index:2;background:var(--bg);}
+.dt.matrix .mx-sticky-b{position:sticky;left:34px;z-index:2;background:var(--bg);box-shadow:1px 0 0 var(--bd);}
+.dt.matrix thead .mx-sticky-a,.dt.matrix thead .mx-sticky-b{z-index:4;background:var(--s2);}
+.dt.matrix tr.ours .mx-sticky-a,.dt.matrix tr.ours .mx-sticky-b{background:var(--okBg);}
+.dt.matrix td.mx-cell{text-align:center;font-family:var(--m);font-weight:700;padding:7px 0;width:40px;}
+.dt.matrix td.mx-cell.yes{background:var(--okBg);color:var(--ok);}
+.dt.matrix td.mx-cell.no{color:transparent;}
+.dt.matrix tbody tr:hover td{background:var(--s1);}
+.dt.matrix tbody tr.ours:hover td{background:var(--okBg);}
+.dt.matrix .col-hl{background:var(--accBg)!important;}
+.dt.matrix th.mx-col.col-hl span{color:var(--acc);}
+.dt.matrix tr.mx-freq td{position:sticky;bottom:0;z-index:2;background:var(--s2);font-family:var(--m);font-weight:700;border-top:2px solid var(--bd2);}
+.dt.matrix tr.mx-freq td.mx-sticky-a,.dt.matrix tr.mx-freq td.mx-sticky-b{z-index:3;}
+.dt.matrix tr.mx-freq td.hot{background:rgba(239,68,68,.18);color:var(--danger);}
+.dt.matrix tr.mx-freq td.warm{background:var(--warnBg);color:var(--warn);}
+.dt.matrix tr.is-plat td,.dt.matrix tr.fail-row td{background:var(--s1);}
+.mx-legend{display:flex;gap:10px;align-items:center;}
+.mx-lg{font-size:9px;font-family:var(--m);padding:2px 8px;border-radius:4px;}
+.mx-lg.yes{background:var(--okBg);color:var(--ok);}
+.mx-lg.hot{background:rgba(239,68,68,.18);color:var(--danger);}
+.mx-lg.warm{background:var(--warnBg);color:var(--warn);}
+.failcell{color:var(--danger);font-size:10px;font-style:italic;padding-left:10px;}
+.tag-fail{font-size:8px;font-family:var(--m);font-weight:700;background:var(--danger);color:#fff;padding:1px 5px;border-radius:3px;letter-spacing:.5px;}
+.tag-block{font-size:8px;font-family:var(--m);font-weight:700;background:#7c3aed;color:#fff;padding:1px 5px;border-radius:3px;letter-spacing:.5px;}
+.tag-skip2{font-size:8px;font-family:var(--m);font-weight:700;background:var(--s2);color:var(--td);border:1px solid var(--bd);padding:1px 5px;border-radius:3px;letter-spacing:.3px;}
+
+/* INFO PANEL (kenapa ga ke-crawl) */
+.info-panel{margin-top:10px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--s1);overflow:hidden;}
+.info-panel summary{cursor:pointer;padding:9px 11px;font-size:11px;font-weight:600;color:var(--td);list-style:none;user-select:none;}
+.info-panel summary::-webkit-details-marker{display:none;}
+.info-panel summary:hover{color:var(--t);background:var(--s2);}
+.info-panel[open] summary{border-bottom:1px solid var(--bd);color:var(--t);}
+.info-body{padding:11px;font-size:10.5px;line-height:1.6;color:var(--td);}
+.info-body p{margin:0 0 9px;}
+.info-row{display:block;margin-bottom:8px;padding-left:2px;}
+.info-row span{margin-right:5px;vertical-align:middle;}
+.info-note{margin-top:10px!important;padding:9px;background:var(--accBg);border:1px solid var(--accBd);border-radius:var(--rs);color:var(--t);}
+.info-body code{font-family:var(--m);font-size:9.5px;background:var(--s2);padding:1px 4px;border-radius:3px;}
+
+/* GAP priority row colors */
+.dt tr.p-crit td:first-child{box-shadow:inset 3px 0 var(--danger);}
+.dt tr.p-high td:first-child{box-shadow:inset 3px 0 var(--warn);}
+.dt tr.p-med  td:first-child{box-shadow:inset 3px 0 var(--ok);}
+.dt tr.p-cov  td:first-child{box-shadow:inset 3px 0 var(--acc);}
+.dt tr.p-adv  td:first-child{box-shadow:inset 3px 0 #a78bfa;}
+.dt .prio{font-family:var(--m);font-size:10px;font-weight:700;white-space:nowrap;}
+.dt tr.p-crit .prio{color:var(--danger);}.dt tr.p-high .prio{color:var(--warn);}
+.dt tr.p-med .prio{color:var(--ok);}.dt tr.p-cov .prio{color:var(--acc);}.dt tr.p-adv .prio{color:#a78bfa;}
+
+/* BLUEPRINT cards */
+.bp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;}
+.bp-card{border:1px solid var(--bd);border-radius:var(--r);padding:14px;background:var(--s1);border-left-width:3px;}
+.bp-card.p-crit{border-left-color:var(--danger);}.bp-card.p-high{border-left-color:var(--warn);}
+.bp-card.p-med{border-left-color:var(--ok);}.bp-card.p-adv{border-left-color:#a78bfa;}.bp-card.p-cov{border-left-color:var(--acc);}
+.bp-h{font-size:12px;font-weight:700;margin-bottom:4px;}
+.bp-note{font-size:10px;color:var(--td);margin-bottom:8px;line-height:1.5;}
+.bp-items{display:flex;flex-wrap:wrap;gap:5px;}
+.bp-chip{font-size:10px;background:var(--s2);border:1px solid var(--bd);border-radius:4px;padding:2px 8px;color:var(--t);}
+.bp-empty{font-size:10px;color:var(--tf);font-style:italic;}
+
+/* PAGE DETAIL */
+.pd-list{display:flex;flex-direction:column;gap:12px;}
+.pd-card{border:1px solid var(--bd);border-radius:var(--r);padding:14px;background:var(--s1);}
+.pd-card.ours{border-color:var(--okBd);background:var(--okBg);}
+.pd-card.fail{border-color:rgba(239,68,68,.3);}
+.pd-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;}
+.pd-pos{font-family:var(--m);font-size:10px;color:var(--td);}
+.pd-type{font-size:9px;font-family:var(--m);background:var(--accBg);color:var(--acc);border:1px solid var(--accBd);padding:1px 6px;border-radius:3px;}
+.pd-src{font-size:8px;font-family:var(--m);color:var(--tf);border:1px solid var(--bd);padding:1px 5px;border-radius:3px;}
+.pd-title{font-size:12px;font-weight:600;margin-top:8px;}
+.pd-meta{font-size:10px;color:var(--td);margin-top:3px;line-height:1.5;}
+.pd-stats{font-family:var(--m);font-size:9px;color:var(--tf);margin-top:8px;}
+.pd-cta{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:9px;color:var(--td);}
+.pd-sub{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--td);margin:12px 0 6px;}
+.pd-headings{display:flex;flex-direction:column;gap:2px;}
+.hd{font-size:11px;color:var(--t);padding:2px 0;display:flex;gap:7px;align-items:baseline;}
+.hd-tag{font-family:var(--m);font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;flex-shrink:0;}
+.hd-h1{font-weight:600;}.hd-h1 .hd-tag{background:var(--accBg);color:var(--acc);}
+.hd-h2{padding-left:14px;}.hd-h2 .hd-tag{background:var(--warnBg);color:var(--warn);}
+.hd-h3{padding-left:28px;color:var(--td);}.hd-h3 .hd-tag{background:var(--s2);color:var(--tf);}
+.pd-err{color:var(--danger);font-size:10px;margin-top:6px;font-style:italic;}
+
+.tag-plat{font-size:8px;font-family:var(--m);font-weight:700;background:var(--warnBg);color:var(--warn);border:1px solid var(--warnBd);padding:1px 6px;border-radius:3px;letter-spacing:.3px;white-space:nowrap;}
+.tag-web{font-size:8px;font-family:var(--m);font-weight:700;background:var(--okBg);color:var(--ok);border:1px solid var(--okBd);padding:1px 6px;border-radius:3px;letter-spacing:.3px;}
+.dt tr.is-plat td{opacity:.7;}
+.skipcell{color:var(--warn);font-size:10px;font-style:italic;}
+.pd-card.skip{border-color:var(--warnBd);background:var(--warnBg);}
+
+/* COMPARE 1-on-1 */
+.cmp-form{display:flex;align-items:flex-end;gap:12px;margin-bottom:8px;flex-wrap:wrap;}
+.cmp-in{flex:1;min-width:220px;}
+.cmp-in label{display:block;font-size:10px;color:var(--td);margin-bottom:4px;font-weight:500;}
+.cmp-in input{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t);font-family:var(--m);font-size:11px;padding:9px 10px;outline:none;}
+.cmp-in input:focus{border-color:var(--acc);}
+.cmp-vs{font-family:var(--m);font-weight:700;color:var(--td);font-size:11px;padding-bottom:9px;}
+.cmp-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.cmp-card{border:1px solid var(--bd);border-radius:var(--r);padding:14px;background:var(--s1);}
+.cmp-card-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;}
+.cmp-badge{font-family:var(--m);font-weight:700;font-size:11px;background:var(--accBg);color:var(--acc);border:1px solid var(--accBd);width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:5px;}
+.cmp-big{font-size:26px;font-weight:700;font-family:var(--m);margin:10px 0 4px;}
+.cmp-big span{font-size:12px;color:var(--td);font-weight:400;}
+.cmp-gap-box{background:var(--warnBg);border:1px solid var(--warnBd);border-radius:var(--rs);padding:11px 13px;font-size:11px;color:var(--warn);margin-bottom:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;line-height:1.7;}
+.cmp-gap-box.ok{background:var(--okBg);border-color:var(--okBd);color:var(--ok);}
+.cmp-gap-box .bp-chip{background:var(--s1);}
+.cmp-tables{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;}
+@media(max-width:820px){.cmp-tables,.cmp-cards{grid-template-columns:1fr;}}
+.cmp-tbl td.cc,.cmp-tbl th.cc{text-align:center;font-family:var(--m);width:42px;}
+.cmp-tbl td.cc.win{color:var(--ok);font-weight:700;}
+.cmp-tbl .cmp-note{font-size:10px;color:var(--td);}
+.cmp-tbl tr.cmp-a td{background:var(--accBg);}
+.cmp-tbl tr.cmp-b td{background:rgba(245,158,11,.08);}
+.cmp-tbl tr.cmp-a .cmp-note{color:var(--acc);}.cmp-tbl tr.cmp-b .cmp-note{color:var(--warn);}
+.cmp-tbl tr.cmp-none td{opacity:.5;}
+
+/* GAP / BLUEPRINT legend */
+.gap-legend{font-size:10px;color:var(--td);margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;line-height:1.7;}
+.gap-legend .gl{font-family:var(--m);font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid var(--bd);}
+.gap-legend .gl.crit{background:rgba(239,68,68,.12);color:var(--danger);}
+.gap-legend .gl.high{background:var(--warnBg);color:var(--warn);}
+.gap-legend .gl.med{background:var(--okBg);color:var(--ok);}
+.gap-legend .gl.adv{background:rgba(167,139,250,.12);color:#a78bfa;}
+.gap-legend .gl.cov{background:var(--accBg);color:var(--acc);}
+.gap-legend .gl.low{background:var(--s2);color:var(--tf);}
+
+/* TOAST */
+.toast{position:fixed;bottom:16px;right:16px;font-weight:600;font-size:11px;padding:9px 16px;border-radius:var(--rs);z-index:2000;transform:translateY(50px);opacity:0;transition:all .2s;max-width:420px;}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* Sync modal steps */
+.step{margin-bottom:6px;padding-left:14px;position:relative;font-size:11px;color:var(--td);line-height:1.6;}
+.step::before{content:'';position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--acc);border-radius:50%;}
+
+/* radio group inline */
+.radio-inline{display:flex;gap:14px;}
+.radio-inline label{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t);cursor:pointer;}
+.radio-inline input{width:auto;cursor:pointer;accent-color:var(--acc);}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<header class="hdr">
+  <h1><span class="hdr-dot"></span>LP Competitor Analyzer</h1>
+  <div class="hdr-actions">
+    <div class="st-pill off" id="serpSt" onclick="openSettings('serp')" title="SerpAPI status">
+      <span class="sd"></span><span id="serpLbl">SerpAPI: off</span>
+    </div>
+    <div class="st-pill off" id="aiSt" onclick="openSettings('ai')" title="Gemini status">
+      <span class="sd"></span><span id="aiLbl">AI: off</span>
+    </div>
+    <div class="st-pill off" id="syncSt" onclick="openSyncMo()" title="Cloud sync status">
+      <span class="sd"></span><span id="syncLbl">Sync: off</span>
+    </div>
+    <span class="sep"></span>
+    <button class="btn btn-acc btn-sm" onclick="syncPull()" title="Load from GitHub Gist">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Pull</span>
+    </button>
+    <button class="btn btn-acc btn-sm" onclick="syncPush()" title="Save to GitHub Gist">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Push</span>
+    </button>
+    <span class="sep"></span>
+    <button class="btn btn-g btn-sm" onclick="openSettings()" title="API settings">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Settings</span>
+    </button>
+    <button class="theme-tog" onclick="toggleTheme()" id="btnTheme" title="Toggle theme"></button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="side-sec">
+      <h3>
+        <span style="display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Analyses</span>
+        <button class="btn btn-g btn-sm" style="padding:3px 8px;" onclick="addProject()">+ New</button>
+      </h3>
+      <div id="projList"></div>
+    </div>
+
+    <div class="side-sec">
+      <h3><span style="display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>New Analysis</span></h3>
+      <div class="ig"><label>Keyword</label><input type="text" id="inKeyword" placeholder="ketik keyword target..."></div>
+      <div class="ig"><label>Our URL (opsional)</label><input type="text" id="inDomain" placeholder="https://situs-kamu.com/lp"><div class="hint">Boleh URL lengkap. Kalau diisi & ga muncul di top 10, URL ini tetap di-crawl & ikut dibandingkan.</div></div>
+      <div class="ir">
+        <div class="ig"><label>gl</label><input type="text" id="inGl" value="id"></div>
+        <div class="ig"><label>hl</label><input type="text" id="inHl" value="id"></div>
+      </div>
+      <div class="ig"><label>Location</label><input type="text" id="inLoc" placeholder="mis. Jakarta, Indonesia (opsional)"></div>
+      <div class="ig"><label>Section detection</label>
+        <select id="inDetect">
+          <option value="gemini">Gemini (akurat, semantic) — recommended</option>
+          <option value="regex">Regex only (cepat, 0 RPD, kurang akurat)</option>
+        </select>
+        <div class="hint">Gemini baca makna halaman (akurat lintas-niche). Regex cuma cocokin class/id/heading — hemat kuota tapi sering bolong di situs class acak / heavy-JS.</div>
+      </div>
+      <div class="ig"><label>Crawl berapa URL (hemat RPD)</label>
+        <select id="inNum">
+          <option value="3">Top 3</option>
+          <option value="5">Top 5</option>
+          <option value="10" selected>Top 10 (semua)</option>
+        </select>
+        <div class="hint">Gemini = 1 RPD per website. Pilih lebih sedikit buat hemat kuota. Platform (IG/dll) ga dihitung.</div>
+      </div>
+      <button class="btn btn-p" onclick="runAnalysis()">Run Analysis</button>
+
+      <details class="info-panel">
+        <summary>❓ Kenapa ada URL yang ga ke-crawl?</summary>
+        <div class="info-body">
+          <p>Tiap hasil SERP tetap <strong>ditampilkan</strong>, tapi belum tentu di-crawl. Ada 5 status:</p>
+          <div class="info-row"><span class="tag-web">Website</span> Berhasil di-crawl & section ke-detect. Inilah yang dihitung di Gap & Benchmark.</div>
+          <div class="info-row"><span class="tag-plat">Platform</span> Non-website (Instagram, TikTok, YouTube, Wikipedia, marketplace, forum). Sengaja di-skip — ini bukan landing page, jadi ga relevan buat analisa LP. Ga dihitung gap.</div>
+          <div class="info-row"><span class="tag-block">BLOCKED</span> Situs nolak kasih HTML. Penyebabnya: proteksi anti-bot (Cloudflare "Just a moment", 403 Forbidden, CAPTCHA), atau halaman yang kontennya dirender JavaScript (HTML mentah-nya kosong). Sering kejadian di e-commerce besar / situs perhiasan / marketplace. Di-exclude dari gap biar angka ga melenceng.</div>
+          <div class="info-row"><span class="tag-fail">FAIL</span> Error teknis pas ambil halaman: timeout (situs lambat &gt;20 detik), koneksi putus, atau Worker error.</div>
+          <div class="info-row"><span class="tag-skip2">not crawled</span> Sengaja dilewati karena di luar limit "Crawl berapa URL" yang kamu pilih (mis. Top 5 → website ke-6+ ga di-crawl, buat hemat RPD). Naikkan limit kalau mau ikutkan.</div>
+          <p class="info-note">💡 <strong>BLOCKED itu batas teknis, bukan bug.</strong> Tool ini jalan di browser + Cloudflare Worker yang ambil HTML mentah — sama seperti <code>requests</code> di Python. Situs anti-bot kuat memang dirancang menahan ini; butuh headless browser (berat/berbayar) buat nembus. Wajar kalau 1-2 dari 10 situs ke-BLOCKED — fokus aja ke yang berhasil, sampelnya tetap representatif.</p>
+        </div>
+      </details>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="tb">
+      <div class="vt" id="viewTabs">
+        <button class="active" data-view="serp">SERP Overview</button>
+        <button data-view="matrix">Section Matrix</button>
+        <button data-view="gap">Gap Analysis</button>
+        <button data-view="bench">Content Benchmark</button>
+        <button data-view="blueprint">LP Blueprint</button>
+        <button data-view="detail">Page Detail</button>
+        <button data-view="compare">Compare 1-on-1</button>
+      </div>
+      <div class="tb-r">
+        <button class="btn btn-g btn-sm" onclick="exportXLSX()" title="Export semua sheet ke Excel (.xlsx)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>XLSX</span></button>
+        <button class="btn btn-g btn-sm" onclick="exportCSV()" title="Export view aktif ke CSV"><span>CSV</span></button>
+        <button class="btn btn-g btn-sm" onclick="exportMatrixImg('png')" title="Section Matrix → PNG"><span>PNG</span></button>
+        <button class="btn btn-g btn-sm" onclick="exportMatrixImg('svg')" title="Section Matrix → SVG"><span>SVG</span></button>
+      </div>
+    </div>
+
+    <div class="content" id="content">
+      <div class="es">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--tf)" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 16v-4M12 16V8M17 16v-6"/></svg>
+        <h4>Belum ada hasil analisa</h4>
+        <p>Set API key kamu lewat <strong>Settings</strong>, lalu isi keyword di panel kiri. Tahap 1 ini menyiapkan struktur, theme, multi-key API, dan Gist sync. Fetch SERP &amp; crawl akan aktif di tahap berikutnya.</p>
+        <button class="btn btn-acc btn-sm" onclick="openSettings()">Buka Settings &amp; pasang API key</button>
+      </div>
+    </div>
+
+    <div class="sb">
+      <div class="st">SERP: <span id="sbSerp">0</span></div>
+      <div class="st">Crawled: <span id="sbCrawled">0</span></div>
+      <div class="st">Skipped: <span id="sbSkipped">0</span></div>
+      <div class="st">Blocked: <span id="sbBlocked">0</span></div>
+      <div class="st">Failed: <span id="sbFailed">0</span></div>
+      <div class="st">Sections: <span id="sbSec">18</span></div>
+      <div class="credit">by Teguh Gunawan, S.Li.</div>
+    </div>
+  </main>
+</div>
+
+<!-- ===================== SETTINGS MODAL ===================== -->
+<div class="mo" id="settingsMo">
+  <div class="md">
+    <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>API Settings</h3>
+    <div class="sub">Semua key disimpan <strong>lokal di browser ini</strong> (localStorage). Aman buat GitHub Pages — tidak ada yang di-hardcode ke file.</div>
+
+    <div class="disc">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>SerpAPI butuh akun berbayar (ada free tier). Key SerpAPI aman di Cloudflare Worker kamu — tidak pernah masuk browser. Crawl halaman lewat proxy gratis di bawah, kadang lambat/gagal untuk situs tertentu.</span>
+    </div>
+
+    <!-- SERP Worker(s) -->
+    <div class="field-lbl">SERP Worker (Cloudflare proxy)</div>
+    <div class="key-list" id="serpKeyList"></div>
+    <div class="ig" style="margin-top:6px;"><label>Worker URL</label>
+      <input type="text" id="serpWurl" placeholder="https://serpapi-proxy.xxx.workers.dev">
+    </div>
+    <div class="ir">
+      <div class="ig"><label>Nama (label)</label><input type="text" id="serpKeyName" placeholder="mis. Akun A"></div>
+      <div class="ig"><label>Shared Secret (kalau pakai)</label><input type="password" id="serpSecret" placeholder="kosongkan jika tanpa password"></div>
+    </div>
+    <button class="btn btn-g btn-sm" onclick="addSerpWorker()" style="width:100%;margin-top:5px;">+ Simpan Worker ini</button>
+    <div class="hint">Key SerpAPI ada di Cloudflare, bukan di sini. Tool cuma simpan URL Worker + secret (lokal).</div>
+
+    <hr>
+
+    <!-- Gemini keys -->
+    <div class="field-lbl">Gemini API Keys (multi)</div>
+    <div class="ig"><label>Model</label>
+      <select id="aiModel" onchange="renderQuota()">
+        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite (termurah & cepat)</option>
+        <option value="gemini-2.5-flash">Gemini 2.5 Flash (balanced, default)</option>
+        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+        <option value="gemini-3-flash">Gemini 3 Flash</option>
+        <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite (workhorse hemat)</option>
+        <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (preview, terbaik reasoning)</option>
+        <option value="gemini-3.5-flash">Gemini 3.5 Flash (terbaru, Mei 2026)</option>
+      </select>
+      <div class="hint">Default tetap 2.5 Flash. Model 3.x lebih pintar tapi cek limit/harga di akun AI Studio kamu.</div>
+    </div>
+    <div class="key-list" id="aiKeyList"></div>
+    <div class="key-add">
+      <input type="text" class="kname" id="aiKeyName" placeholder="Nama (mis. Brand A)">
+      <input type="password" id="aiKeyVal" placeholder="AIzaSy...">
+    </div>
+    <button class="btn btn-g btn-sm" onclick="addAiKey()" style="width:100%;margin-top:5px;">+ Simpan Gemini key</button>
+
+    <div class="field-lbl">Quota hari ini (key + model aktif)</div>
+    <div class="quota-row">
+      <span class="quota-lbl">Requests</span>
+      <div class="quota-bar"><div class="quota-fill" id="aiQuotaFill" style="width:0%"></div></div>
+      <span class="quota-val" id="aiQuotaVal">0 / 20</span>
+    </div>
+    <div class="quota-row"><span class="quota-lbl">Tokens in/out</span><span style="font-family:var(--m);color:var(--t);" id="aiTokVal">0 / 0</span></div>
+
+    <hr>
+
+    <!-- Crawl proxy -->
+    <div class="field-lbl">Crawl Method</div>
+    <div class="ig">
+      <select id="proxySel">
+        <option value="worker">Cloudflare Worker (recommended, stabil)</option>
+        <option value="allorigins">AllOrigins (proxy gratis)</option>
+        <option value="corsproxy">corsproxy.io (proxy gratis)</option>
+        <option value="codetabs">codetabs.com (proxy gratis)</option>
+      </select>
+      <div class="hint">Worker pakai SERP Worker yang sama (perlu re-deploy kode terbaru). Proxy gratis sering down — pakai cuma kalau Worker belum siap.</div>
+    </div>
+
+    <hr>
+    <div class="field-lbl">Cara dapat key</div>
+    <div class="step">SerpAPI: <a href="https://serpapi.com/manage-api-key" target="_blank">serpapi.com/manage-api-key</a> → copy Private API Key</div>
+    <div class="step">Gemini: <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> → Create API Key</div>
+
+    <div class="btn-row">
+      <button class="btn btn-g btn-sm" onclick="testSerp()" id="testSerpBtn">Test Worker</button>
+      <button class="btn btn-g btn-sm" onclick="testAi()" id="testAiBtn">Test Gemini</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-g btn-sm" onclick="closeSettings()">Close</button>
+      <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SYNC MODAL ===================== -->
+<div class="mo" id="syncMo">
+  <div class="md">
+    <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>GitHub Gist Cloud Sync</h3>
+    <div class="sub">Sync semua analisa antar device via private Gist. Token disimpan lokal di browser ini saja.</div>
+
+    <div class="ig"><label>GitHub Personal Access Token</label><input type="password" id="syncTok" placeholder="ghp_xxxxxxxxxxxx"></div>
+    <div class="ig"><label>Gist ID</label><input type="text" id="syncGid" placeholder="a1b2c3d4e5f6..."></div>
+    <label style="font-size:10px;color:var(--td);display:flex;align-items:center;gap:6px;cursor:pointer;margin-top:6px;">
+      <input type="checkbox" id="syncAuto" style="width:auto;accent-color:var(--acc);"> Auto-push setiap save
+    </label>
+
+    <hr>
+    <div class="field-lbl">Setup pertama kali</div>
+    <div class="step">Buka <a href="https://github.com/settings/tokens/new?scopes=gist&description=LP%20Competitor%20Analyzer" target="_blank">GitHub Token Page</a> → scope <code>gist</code> sudah tercentang → Generate → copy</div>
+    <div class="step">Buka <a href="https://gist.github.com/" target="_blank">gist.github.com</a> → buat <strong>secret gist</strong>, filename <code>lp-competitor-analyzer.json</code>, isi <code>[]</code></div>
+    <div class="step">Copy Gist ID dari URL → paste di atas → Save → Push</div>
+
+    <div class="btn-row">
+      <button class="btn btn-d btn-sm" onclick="syncDisconnect()">Disconnect</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-g btn-sm" onclick="closeSyncMo()">Cancel</button>
+      <button class="btn btn-p btn-sm" style="width:auto;padding:7px 18px;" onclick="syncSaveCfg()">Save Config</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   LP Competitor Analyzer — Stage 1
+   Structure + theme + multi-key settings + Gist sync
+   Logic source: lp_competitor_analysis.py (Teguh Gunawan)
+   ========================================================= */
+
+// ---------- Section patterns: GENERAL universal LP sections (multi-niche) ----------
+// Regex diperketat: hindari kata super-umum (class/system/form/header) yang match
+// di hampir semua HTML. Pakai \b word-boundary & istilah yang lebih spesifik.
+const SECTION_PATTERNS = [
+  ["Hero / Header", /\b(hero|jumbotron|masthead|main-?banner|hero-?section|above-?the-?fold|page-?hero)/i],
+  ["Value Proposition", /\b(value-?prop|tagline|slogan|headline|main-?title|usp|unique-?selling|proposition)/i],
+  ["Trust Bar / Logos", /\b(trust-?bar|client-?logo|brand-?logo|as-?seen-?on|featured-?in|trusted-?by|partner-?logo|logo-?strip|logo-?cloud)/i],
+  ["Features / Benefits", /\b(feature|benefit|keunggulan|kelebihan|keuntungan|advantage|why-?us|why-?choose|mengapa|fitur|manfaat)/i],
+  ["How It Works", /\b(how-?it-?works|how-?to|cara-?kerja|langkah|step|process|alur|tahapan|proses)/i],
+  ["Product / Service", /\b(product|service|layanan|produk|solution|solusi|offering|what-?we-?do|program|paket)/i],
+  ["Pricing / Packages", /\b(pricing|price|harga|biaya|tarif|paket|package|plan|cost|subscription|langganan)/i],
+  ["Social Proof / Stats", /\b(social-?proof|stat|statistic|counter|achievement|pencapaian|milestone|metric)/i],
+  ["Testimonials / Reviews", /\b(testimoni|testimonial|review|ulasan|rating|feedback|kata-?mereka|what-?they-?say)/i],
+  ["Case Study / Portfolio", /\b(case-?stud|portfolio|portofolio|our-?work|project|hasil|gallery|galeri|showcase)/i],
+  ["About / Company", /\b(about-?us|about|tentang|company|perusahaan|profil|profile|visi|misi|vision|mission|our-?story)/i],
+  ["Team / People", /\b(team|tim|our-?people|staff|pengajar|tutor|instructor|mentor|dokter|konsultan|founder|leadership)/i],
+  ["FAQ", /\b(faq|frequently-?asked|pertanyaan|tanya-?jawab|q-?and-?a|qna)/i],
+  ["Lead Form", /\b(lead-?form|signup-?form|register-?form|contact-?form|formulir|daftar-?form|get-?started|request-?demo|free-?trial)/i],
+  ["Primary CTA", /\b(cta|call-?to-?action|hero-?button|primary-?btn|buy-?now|order-?now|beli|pesan|book-?now|get-?quote)/i],
+  ["Contact / Location", /\b(contact|kontak|hubungi|location|lokasi|address|alamat|maps?|peta|cabang|branch|whatsapp|wa-?button)/i],
+  ["Resources / Blog", /\b(blog|artikel|article|resource|news|berita|insight|tips|knowledge|learning-?center)/i],
+  ["Footer", /\b(footer|site-?footer|page-?footer|bottom-?bar|copyright|sitemap)/i],
+];
+
+// Singkatan kolom untuk Section Matrix (header tegak)
+const SECTION_ABBR = {
+  "Hero / Header":"Hero","Value Proposition":"Value Prop","Trust Bar / Logos":"Trust Bar",
+  "Features / Benefits":"Features","How It Works":"How It Works","Product / Service":"Product",
+  "Pricing / Packages":"Pricing","Social Proof / Stats":"Social Proof","Testimonials / Reviews":"Testimonials",
+  "Case Study / Portfolio":"Case Study","About / Company":"About","Team / People":"Team",
+  "FAQ":"FAQ","Lead Form":"Lead Form","Primary CTA":"CTA","Contact / Location":"Contact",
+  "Resources / Blog":"Blog","Footer":"Footer"
+};
+function secAbbr(n){return SECTION_ABBR[n]||n;}
+
+// ---------- State ----------
+const LS_PROJECTS = 'lpca-projects';
+const LS_SETTINGS = 'lpca-settings';
+const LS_THEME    = 'lpca-theme';
+const LS_SYNC     = 'lpca-sync';
+
+let projects = [];      // [{id,name,keyword,domain,gl,hl,loc,detect,createdAt,serp:[],pages:[],sections:{},...}]
+let activeProj = null;
+let curView = 'serp';
+
+// settings: multi-key SerpAPI + Gemini, proxy, ai usage
+let settings = {
+  serpKeys: [],          // [{name,url,secret}] — daftar SERP Worker
+  serpActive: '',        // active worker URL
+  aiKeys: [],            // [{name,key}]
+  aiActive: '',
+  aiModel: 'gemini-2.5-flash',
+  proxy: 'worker',
+  aiUsage: {},           // aiUsage[keyId][model] = {date,rpd,inTok,outTok}
+};
+let syncCfg = { token:'', gistId:'', autoPush:false, lastSync:null };
+let syncBusy = false;
+
+const RPD_LIMIT = 20;
+
+// ---------- Helpers ----------
+function $(id){return document.getElementById(id);}
+function esc(s){const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+function toast(msg,type){ // type: 'ok'(default)|'err'|'info'
+  const t=$('toast');t.textContent=msg;
+  const bg=type==='err'?'var(--danger)':type==='info'?'var(--acc)':'var(--ok)';
+  t.style.background=bg;t.style.color=type?'#fff':'#000';
+  if(!type)t.style.color='#000';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);
+}
+function keyId(k){let h=0;for(let i=0;i<k.length;i++){h=((h<<5)-h+k.charCodeAt(i))|0;}return 'k'+Math.abs(h);}
+
+// ---------- Persistence ----------
+function saveProjects(){try{localStorage.setItem(LS_PROJECTS,JSON.stringify(projects));}catch(e){}}
+function saveSettings(silent){
+  // gather model + proxy from modal if open
+  const m=$('aiModel');if(m)settings.aiModel=m.value;
+  const px=$('proxySel');if(px)settings.proxy=px.value;
+  try{localStorage.setItem(LS_SETTINGS,JSON.stringify(settings));}catch(e){}
+  updateStatusPills();
+  if(!silent){toast('Settings tersimpan');closeSettings();}
+  // auto-push hook
+  if(syncCfg.autoPush&&syncCfg.token&&syncCfg.gistId)scheduleAutoPush();
+}
+function loadAll(){
+  try{const p=localStorage.getItem(LS_PROJECTS);if(p){projects=JSON.parse(p);if(projects.length)activeProj=projects[0].id;}}catch(e){}
+  try{const s=localStorage.getItem(LS_SETTINGS);if(s){settings={...settings,...JSON.parse(s)};}}catch(e){}
+  try{const sy=localStorage.getItem(LS_SYNC);if(sy){syncCfg={...syncCfg,...JSON.parse(sy)};}}catch(e){}
+}
+
+// ---------- Theme ----------
+const IC_MOON='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const IC_SUN='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+function loadTheme(){const t=localStorage.getItem(LS_THEME)||'dark';document.documentElement.setAttribute('data-theme',t);$('btnTheme').innerHTML=t==='dark'?IC_SUN:IC_MOON;}
+function toggleTheme(){const c=document.documentElement.getAttribute('data-theme')||'dark';const n=c==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);$('btnTheme').innerHTML=n==='dark'?IC_SUN:IC_MOON;try{localStorage.setItem(LS_THEME,n);}catch(e){}}
+
+// ---------- Status pills ----------
+function updateStatusPills(){
+  // SerpAPI
+  const sp=$('serpSt'),spl=$('serpLbl');
+  sp.className='st-pill '+(settings.serpActive?'on':'off');
+  spl.textContent='SerpAPI: '+(settings.serpActive?'ready':'off');
+  // Gemini
+  const ai=$('aiSt'),ail=$('aiLbl');
+  if(settings.aiActive){const u=aiU();ai.className='st-pill '+(u.rpd>=RPD_LIMIT?'err':'on');ail.textContent=`AI: ${u.rpd}/${RPD_LIMIT}`;}
+  else{ai.className='st-pill off';ail.textContent='AI: off';}
+  // Sync
+  const sy=$('syncSt'),syl=$('syncLbl');
+  if(syncBusy){sy.className='st-pill busy';syl.textContent='Sync: syncing';}
+  else if(syncCfg.token&&syncCfg.gistId){
+    sy.className='st-pill on';
+    if(syncCfg.lastSync){let a=Math.floor((Date.now()-syncCfg.lastSync)/1000);let txt=a<60?'just now':a<3600?Math.floor(a/60)+'m':a<86400?Math.floor(a/3600)+'h':Math.floor(a/86400)+'d';syl.textContent='Sync: '+txt;}
+    else syl.textContent='Sync: ready';
+  }else{sy.className='st-pill off';syl.textContent='Sync: off';}
+}
+setInterval(updateStatusPills,30000);
+
+// ---------- AI usage tracking (per active key + model) ----------
+function aiU(){
+  const kid=settings.aiActive?keyId(settings.aiActive):'none';
+  const m=settings.aiModel;
+  if(!settings.aiUsage[kid])settings.aiUsage[kid]={};
+  if(!settings.aiUsage[kid][m])settings.aiUsage[kid][m]={date:'',rpd:0,inTok:0,outTok:0};
+  const u=settings.aiUsage[kid][m];
+  const today=new Date(Date.now()-8*3600*1000).toISOString().split('T')[0]; // ~Asia offset for daily reset
+  if(u.date!==today){u.date=today;u.rpd=0;u.inTok=0;u.outTok=0;}
+  return u;
+}
+function renderQuota(){
+  const m=$('aiModel');if(m)settings.aiModel=m.value;
+  const u=aiU();
+  const pct=Math.min(100,(u.rpd/RPD_LIMIT)*100);
+  const f=$('aiQuotaFill');if(f){f.style.width=pct+'%';f.classList.toggle('warn',u.rpd>=RPD_LIMIT);}
+  const v=$('aiQuotaVal');if(v)v.textContent=`${u.rpd} / ${RPD_LIMIT}`;
+  const tv=$('aiTokVal');if(tv)tv.textContent=`${u.inTok.toLocaleString()} / ${u.outTok.toLocaleString()}`;
+}
+function aiRecord(inTok,outTok){const u=aiU();u.rpd++;u.inTok+=inTok||0;u.outTok+=outTok||0;saveSettings(true);updateStatusPills();}
+
+/* =========================================================
+   ENGINE — Stage 3 (crawl+parse) · 4 (detect) · 5 (gap)
+   Ported from lp_competitor_analysis.py
+   ========================================================= */
+
+// ---- CTA detection regex (from Python) ----
+const CTA_RE = /\b(daftar|register|gabung|join|mulai|start|get[\s-]?started|konsultasi|hubungi|contact[\s-]?us|coba|trial|free[\s-]?trial|gratis|free|beli|buy|buy[\s-]?now|buat|sign[\s-]?up|sign[\s-]?in|log[\s-]?in|enroll|subscribe|langganan|pesan|order|order[\s-]?now|checkout|add[\s-]?to[\s-]?cart|tambah[\s-]?keranjang|booking|book|book[\s-]?now|reserve|reservasi|request[\s-]?demo|get[\s-]?demo|demo|get[\s-]?quote|minta[\s-]?penawaran|download|unduh|learn[\s-]?more|selengkapnya|apply|lamar|donate|donasi|claim|klaim)\b/i;
+const WA_RE  = /wa\.me|whatsapp|api\.whatsapp/i;
+
+// ---- Non-website platforms: tampil di SERP tapi SKIP crawl & gap/benchmark ----
+// {match: regex hostname, label}
+const PLATFORMS = [
+  [/(^|\.)instagram\.com$/i,        'Instagram'],
+  [/(^|\.)tiktok\.com$/i,           'TikTok'],
+  [/(^|\.)(youtube\.com|youtu\.be)$/i, 'YouTube'],
+  [/(^|\.)facebook\.com$/i,         'Facebook'],
+  [/(^|\.)(twitter\.com|x\.com)$/i, 'X / Twitter'],
+  [/(^|\.)linkedin\.com$/i,         'LinkedIn'],
+  [/(^|\.)pinterest\.(com|co\.\w+)$/i, 'Pinterest'],
+  [/(^|\.)threads\.(net|com)$/i,    'Threads'],
+  [/(^|\.)(wikipedia\.org|wiktionary\.org|wikimedia\.org)$/i, 'Wikipedia'],
+  [/(^|\.)tokopedia\.com$/i,        'Tokopedia (marketplace)'],
+  [/(^|\.)shopee\.co\.id$/i,        'Shopee (marketplace)'],
+  [/(^|\.)lazada\.co\.id$/i,        'Lazada (marketplace)'],
+  [/(^|\.)bukalapak\.com$/i,        'Bukalapak (marketplace)'],
+  [/(^|\.)quora\.com$/i,            'Quora (forum)'],
+  [/(^|\.)reddit\.com$/i,           'Reddit (forum)'],
+  [/(^|\.)kaskus\.co\.id$/i,        'Kaskus (forum)'],
+  [/(^|\.)medium\.com$/i,           'Medium (blog platform)'],
+  [/(^|\.)play\.google\.com$/i,     'Play Store'],
+  [/(^|\.)apps\.apple\.com$/i,      'App Store'],
+];
+// returns platform label or '' if it's a normal website
+function platformOf(domain){
+  const host=(domain||'').toLowerCase().replace(/^www\./,'');
+  for(const [re,label] of PLATFORMS){ if(re.test(host)) return label; }
+  return '';
+}
+// Ekstrak hostname dari input Our URL (boleh URL penuh atau domain saja)
+function ourDomain(){
+  const v=((P()&&P().domain)||'').trim();
+  if(!v)return '';
+  try{return new URL(v.match(/^https?:\/\//)?v:'https://'+v).hostname.replace(/^www\./,'');}
+  catch(e){return v.replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0];}
+}
+
+// ---- Proxy URL builder (untuk proxy gratis) ----
+function proxyUrl(target){
+  const u=encodeURIComponent(target);
+  switch(settings.proxy){
+    case 'corsproxy': return `https://corsproxy.io/?url=${u}`;
+    case 'codetabs':  return `https://api.codetabs.com/v1/proxy/?quest=${target}`;
+    case 'allorigins':
+    default:          return `https://api.allorigins.win/raw?url=${u}`;
+  }
+}
+
+// ---- Crawl one page → returns HTML string (throws on fail) ----
+// Mode 'worker' (recommended): lewat Cloudflare Worker kamu (stabil).
+// Mode lain: proxy gratis (allorigins/corsproxy/codetabs).
+async function crawlPage(url){
+  if(settings.proxy==='worker'){
+    const w=serpWorker();
+    if(!w)throw new Error('Worker belum di-set (Settings → SERP Worker)');
+    const wu=new URL(w.url);
+    wu.searchParams.set('fetch',url);
+    if(w.secret)wu.searchParams.set('secret',w.secret);
+    const r=await fetch(wu.toString(),{headers:w.secret?{'x-app-secret':w.secret}:{}});
+    let d;try{d=await r.json();}catch(e){throw new Error('Worker balas bukan JSON (HTTP '+r.status+')');}
+    if(!r.ok)throw new Error(d.error||('HTTP '+r.status));
+    if(d.ok===false||!d.html)throw new Error(d.error||'crawl gagal di worker');
+    if(d.html.length<200)throw new Error('Halaman kosong / terlalu pendek');
+    return d.html;
+  }
+  // proxy gratis
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(),20000);
+  try{
+    const r=await fetch(proxyUrl(url),{signal:ctrl.signal});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const html=await r.text();
+    if(!html||html.length<200)throw new Error('Halaman kosong / terlalu pendek');
+    return html;
+  }finally{clearTimeout(t);}
+}
+
+// ---- Parse HTML → metrics (ported extract_meta + page-type) ----
+function parsePage(html,url){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  // strip noise for text/word-count
+  doc.querySelectorAll('script,style,noscript,svg').forEach(el=>el.remove());
+
+  const txt=(doc.body?doc.body.textContent:doc.textContent||'').replace(/\s+/g,' ').trim();
+  const words=txt?txt.split(' ').length:0;
+
+  const getMeta=(sel,attr)=>{const e=doc.querySelector(sel);return e?(e.getAttribute(attr)||'').trim():'';};
+  const h1=[...doc.querySelectorAll('h1')].map(h=>h.textContent.trim()).filter(Boolean);
+  const h2=[...doc.querySelectorAll('h2')].map(h=>h.textContent.trim()).filter(Boolean);
+  const h3=[...doc.querySelectorAll('h3')].map(h=>h.textContent.trim()).filter(Boolean);
+
+  const imgs=doc.querySelectorAll('img').length;
+  const vids=doc.querySelectorAll('video').length + [...doc.querySelectorAll('iframe')].filter(f=>/youtube|vimeo/i.test(f.getAttribute('src')||'')).length;
+  const forms=doc.querySelectorAll('form').length;
+  const waLinks=[...doc.querySelectorAll('a')].filter(a=>WA_RE.test(a.getAttribute('href')||'')).length;
+  const schema=!!doc.querySelector('script[type="application/ld+json"]');
+
+  const ctaEls=[...doc.querySelectorAll('a,button')].filter(e=>CTA_RE.test(e.textContent||''));
+  const ctaTexts=[...new Set(ctaEls.map(e=>e.textContent.trim().replace(/\s+/g,' ')).filter(Boolean))].slice(0,6);
+
+  // page-type heuristic
+  const pageType=detectPageType(doc,url,{h1,h2,words,forms,schema});
+
+  return {
+    meta_title:(doc.querySelector('title')?.textContent||'').trim().slice(0,160),
+    meta_description:getMeta('meta[name="description"]','content').slice(0,250),
+    h1,h2,h3,
+    h2_count:h2.length,h3_count:h3.length,
+    image_count:imgs,video_count:vids,form_count:forms,
+    wa_link_count:waLinks,has_schema:schema,
+    word_count:words,
+    cta_button_count:ctaEls.length,
+    cta_button_texts:ctaTexts,
+  };
+}
+
+function detectPageType(doc,url,m){
+  const path=(()=>{try{return new URL(url).pathname;}catch(e){return url;}})();
+  const isHome=path==='/'||path==='';
+  const ld=[...doc.querySelectorAll('script[type="application/ld+json"]')].map(s=>s.textContent).join(' ');
+  const hasArticleSchema=/"@type"\s*:\s*"(Article|BlogPosting|NewsArticle)"/i.test(ld);
+  const hasProductSchema=/"@type"\s*:\s*"(Product|Offer)"/i.test(ld);
+  const titleAll=(m.h1.join(' ')+' '+m.h2.join(' ')).toLowerCase();
+
+  if(hasProductSchema) return 'Product Page';
+  if(hasArticleSchema) return 'Article / Blog';
+  if(isHome) return 'Homepage';
+  if(/\b\d+\s+(cara|tips|rekomendasi|best|terbaik|daftar|list)\b/i.test(titleAll)) return 'Listicle';
+  if(/\b(cara|how to|tutorial|panduan)\b/i.test(titleAll)) return 'How-to / Guide';
+  if(m.forms>=1 && m.words<1200) return 'Landing Page';
+  if(m.words>=1200) return 'Article / Content';
+  return 'Landing Page';
+}
+
+// ---- Deteksi balasan anti-bot / halaman kosong (BLOCKED) ----
+// return string alasan kalau ke-block, '' kalau HTML normal
+function isBlockedHtml(html){
+  if(!html) return 'kosong (0 byte)';
+  const len=html.length;
+  if(len<600) return 'HTML terlalu pendek ('+len+' byte) — kemungkinan ditolak';
+  const low=html.slice(0,4000).toLowerCase();
+  const sigs=[
+    ['just a moment','Cloudflare challenge'],
+    ['cf-browser-verification','Cloudflare challenge'],
+    ['cf-challenge','Cloudflare challenge'],
+    ['checking your browser','anti-bot check'],
+    ['access denied','akses ditolak'],
+    ['403 forbidden','403 Forbidden'],
+    ['attention required','Cloudflare block'],
+    ['enable javascript and cookies','JS/cookie wall'],
+    ['captcha','CAPTCHA wall'],
+    ['ddos protection','DDoS protection'],
+    ['请稍候','challenge page'],
+  ];
+  for(const [k,label] of sigs){ if(low.includes(k)) return label; }
+  // shell kosong: ada root tapi nyaris tanpa konten teks
+  const text=html.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  if(text.length<200 && /id=["'](root|app|__next|__nuxt)["']/.test(html)) return 'JS shell (konten dirender JavaScript)';
+  return '';
+}
+
+// ---- Section detection: REGEX (ported detect_sections) ----
+function detectSectionsRegex(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const out={};
+  // Kumpulkan kandidat "penanda struktur" saja — bukan seluruh elemen ber-class.
+  // Ini kunci anti false-positive: cuma landmark + heading + section id/class.
+  const structural=[...doc.querySelectorAll('section,header,footer,nav,main,article,aside,[role="region"],[data-section],[id]')];
+  const classTokens=[];
+  structural.forEach(el=>{
+    const id=(el.id||'').toLowerCase();
+    const cls=(typeof el.className==='string'?el.className:'').toLowerCase();
+    if(id)classTokens.push(id);
+    if(cls)classTokens.push(cls);
+  });
+  const classHay=classTokens.join('  ');
+  const headings=[...doc.querySelectorAll('h1,h2,h3,h4')].map(h=>(h.textContent||'').trim()).filter(Boolean);
+  const headHay=headings.join('  ');
+
+  SECTION_PATTERNS.forEach(([name,re])=>{
+    // match di id/class struktural ATAU di teks heading — keduanya sudah ter-scope
+    out[name]= re.test(classHay) || re.test(headHay);
+  });
+  return out;
+}
+
+// ---- Section detection: GEMINI free-discovery (temukan section bebas, lintas-niche) ----
+async function detectSectionsGemini(page,html){
+  const names=SECTION_PATTERNS.map(s=>s[0]);
+  const ctx=[
+    'TITLE: '+page.meta_title,
+    'META: '+page.meta_description,
+    'H1: '+page.h1.join(' | '),
+    'H2: '+page.h2.slice(0,30).join(' | '),
+    'H3: '+page.h3.slice(0,30).join(' | '),
+    'CTA buttons: '+page.cta_button_texts.join(' | '),
+    'signals: forms='+page.form_count+' images='+page.image_count+' videos='+page.video_count+' wa='+page.wa_link_count+' pageType='+page.pageType,
+  ].join('\n');
+
+  const prompt=`You are an expert landing-page analyst. Analyze this page's structure across ANY industry/niche (not just one vertical).
+
+PAGE SIGNALS:
+${ctx}
+
+Two tasks:
+1) For each STANDARD section below, decide if it is genuinely present (true) or not (false). Be strict — only true if the signals actually indicate that section exists, not just a keyword coincidence.
+2) Also list any ADDITIONAL meaningful sections you detect that are NOT in the standard list (e.g. "Comparison Table", "Integrations", "Guarantee", "Awards"). Keep names short (1-3 words). If none, empty array.
+
+STANDARD SECTIONS:
+${names.map(n=>'- '+n).join('\n')}
+
+Return ONLY valid JSON, no markdown:
+{"standard": {"Hero / Header": true, "FAQ": false, ...all standard keys...}, "extra": ["Section name", ...]}`;
+
+  const model=settings.aiModel;
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${settings.aiActive}`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:1024}})
+  });
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||('HTTP '+r.status));}
+  const data=await r.json();
+  const txt=data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  const usage=data.usageMetadata||{};
+  aiRecord(usage.promptTokenCount||0,usage.candidatesTokenCount||0);
+  let clean=txt.trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
+  const s=clean.indexOf('{'),e=clean.lastIndexOf('}');
+  if(s>=0&&e>s)clean=clean.slice(s,e+1);
+  const obj=JSON.parse(clean);
+  const std=obj.standard||obj; // toleran kalau model balikin flat
+  const out={};
+  names.forEach(n=>{out[n]=!!std[n];});
+  // simpan extra sections ke page (ditampilkan di Page Detail)
+  page._extraSections=Array.isArray(obj.extra)?obj.extra.filter(x=>typeof x==='string'&&x.trim()).slice(0,8):[];
+  return out;
+}
+
+// pages yang benar-benar dianalisa: bukan gagal, bukan platform yang di-skip
+function crawledPages(p){return p.pages.filter(x=>x&&!x.failed&&!x.skipped&&!x.blocked&&!x.notCrawled);}
+
+// ---- Gap analysis (ported generate_gap_analysis) ----
+function buildGap(p){
+  const names=SECTION_PATTERNS.map(s=>s[0]);
+  const all=crawledPages(p);
+  const ourClean=ourDomain();
+  const ourPage=ourClean?all.find(pg=>pg.domain.includes(ourClean)):null;
+  // kompetitor = semua website ter-crawl KECUALI halaman kita
+  const comps=ourPage?all.filter(pg=>pg!==ourPage):all;
+  const total=comps.length;
+
+  return names.map(sec=>{
+    const freq=comps.filter(pg=>pg.sections&&pg.sections[sec]).length;
+    const pct=total?Math.round(freq/total*100):0;
+    const weHave=ourPage?!!(ourPage.sections&&ourPage.sections[sec]):null;
+
+    let priority,action;
+    if(weHave===null){ // no our-domain mode
+      if(pct>=70){priority='🔴 CRITICAL';action='Mayoritas kompetitor punya — wajib ada di LP baru';}
+      else if(pct>=50){priority='🟡 HIGH';action='Lebih dari separuh kompetitor punya';}
+      else if(pct>=30){priority='🟢 MEDIUM';action='Bisa jadi pembeda';}
+      else{priority='⚪ LOW';action='Sedikit kompetitor yang punya';}
+    }else{
+      if(pct>=70&&!weHave){priority='🔴 CRITICAL';action='HARUS ADA — mayoritas kompetitor punya, kita belum';}
+      else if(pct>=50&&!weHave){priority='🟡 HIGH';action='Sangat disarankan — >50% kompetitor punya';}
+      else if(pct>=30&&!weHave){priority='🟢 MEDIUM';action='Pertimbangkan — bisa jadi differentiator';}
+      else if(weHave&&pct<30){priority='⭐ ADVANTAGE';action='Keunggulan kita — jarang kompetitor punya';}
+      else if(weHave){priority='✅ COVERED';action='Sudah ada, maintain & optimize';}
+      else{priority='⚪ LOW';action='Opsional — sedikit kompetitor yang punya';}
+    }
+    const withSec=comps.filter(pg=>pg.sections&&pg.sections[sec]).map(pg=>pg.domain);
+    return {section:sec,freq,total,pct,weHave,priority,action,competitors:withSec};
+  });
+}
+
+// ---- Content benchmark (ported generate_content_benchmarks) ----
+const BENCH_METRICS=[['word_count','Word Count'],['h2_count','H2 Headings'],['h3_count','H3 Headings'],['image_count','Images'],['video_count','Videos'],['form_count','Forms'],['wa_link_count','WhatsApp Links'],['cta_button_count','CTA Buttons']];
+function buildBench(p){
+  const pages=crawledPages(p);
+  const ourClean=ourDomain();
+  const ourPage=ourClean?pages.find(pg=>pg.domain.includes(ourClean)):null;
+  const comps=pages.filter(pg=>!(ourClean&&pg.domain.includes(ourClean)));
+  if(!comps.length)return [];
+  return BENCH_METRICS.map(([k,label])=>{
+    const vals=comps.map(pg=>pg[k]||0);
+    const avg=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*10)/10;
+    const ourVal=ourPage?(ourPage[k]||0):null;
+    let status;
+    if(ourVal===null)status='N/A (tidak di top 10)';
+    else if(ourVal>=avg)status='✅ Above Average';
+    else status=`⚠️ Below Avg (gap: ${Math.round((avg-ourVal)*10)/10})`;
+    return {metric:k,label,avg,min:Math.min(...vals),max:Math.max(...vals),ourVal,status};
+  });
+}
+
+// ---- Blueprint (ported sheet 5) ----
+function buildBlueprint(gap,p){
+  const pick=pr=>gap.filter(g=>g.priority.includes(pr)).map(g=>g.section);
+  const pages=crawledPages(p);
+  const ourClean=ourDomain();
+  let topComp=null,topCount=-1;
+  pages.forEach(pg=>{if(ourClean&&pg.domain.includes(ourClean))return;const c=Object.values(pg.sections||{}).filter(Boolean).length;if(c>topCount){topCount=c;topComp=pg.domain;}});
+  return {
+    critical:pick('CRITICAL'),high:pick('HIGH'),medium:pick('MEDIUM'),advantage:pick('ADVANTAGE'),
+    topComp,topCount:Math.max(0,topCount),
+  };
+}
+
+
+// ---------- Projects ----------
+function P(){return projects.find(p=>p.id===activeProj);}
+function addProject(){
+  const kw=$('inKeyword').value.trim();
+  const name=kw||prompt('Nama analisa:')||('Analysis '+(projects.length+1));
+  const p={
+    id:uid(),name,
+    keyword:kw,
+    domain:$('inDomain').value.trim(),
+    gl:$('inGl').value.trim()||'id',
+    hl:$('inHl').value.trim()||'id',
+    loc:$('inLoc').value.trim(),
+    detect:$('inDetect').value,
+    numCrawl:parseInt($('inNum').value)||10,
+    createdAt:Date.now(),
+    serp:[],pages:[],sections:{},
+  };
+  projects.unshift(p);activeProj=p.id;
+  saveProjects();renderProjects();renderActiveInfo();
+  toast('Analisa baru dibuat');
+}
+function selProject(id){activeProj=id;renderProjects();renderActiveInfo();renderView();}
+function renameProject(id,e){e.stopPropagation();const p=projects.find(x=>x.id===id);if(!p)return;const n=prompt('Rename:',p.name);if(n){p.name=n;saveProjects();renderProjects();}}
+function delProject(id,e){e.stopPropagation();if(!confirm('Hapus analisa ini?'))return;projects=projects.filter(x=>x.id!==id);if(activeProj===id)activeProj=projects[0]?.id||null;saveProjects();renderProjects();renderActiveInfo();renderView();}
+function renderProjects(){
+  const el=$('projList');
+  if(!projects.length){el.innerHTML='<div class="key-empty">Belum ada analisa.</div>';return;}
+  el.innerHTML=projects.map(p=>`
+    <div class="proj-item ${p.id===activeProj?'active':''}" onclick="selProject('${p.id}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span class="p-name">${esc(p.name)}</span>
+      <span class="p-meta">${(p.serp&&p.serp.length)||0}</span>
+      <span class="p-acts">
+        <button onclick="renameProject('${p.id}',event)" title="Rename"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+        <button onclick="delProject('${p.id}',event)" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+      </span>
+    </div>`).join('');
+}
+function renderActiveInfo(){
+  const p=P();
+  if(!p)return;
+  $('inKeyword').value=p.keyword||'';
+  $('inDomain').value=p.domain||'';
+  $('inGl').value=p.gl||'id';
+  $('inHl').value=p.hl||'id';
+  $('inLoc').value=p.loc||'';
+  $('inDetect').value=p.detect||'gemini';
+  if($('inNum'))$('inNum').value=String(p.numCrawl||10);
+  $('sbSerp').textContent=(p.serp&&p.serp.length)||0;
+  $('sbCrawled').textContent=(p.pages&&p.pages.filter(x=>x&&!x.failed&&!x.skipped).length)||0;
+  const sk=$('sbSkipped');if(sk)sk.textContent=(p.pages&&p.pages.filter(x=>x&&x.skipped).length)||0;
+  const bl=$('sbBlocked');if(bl)bl.textContent=(p.pages&&p.pages.filter(x=>x&&x.blocked).length)||0;
+  $('sbFailed').textContent=(p.pages&&p.pages.filter(x=>x&&x.failed).length)||0;
+}
+
+// ---------- Views ----------
+function renderViewTabs(){
+  $('viewTabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.view===curView));
+}
+function renderView(){
+  renderViewTabs();
+  const p=P();
+  // Compare 1-on-1 berdiri sendiri — ga butuh hasil SERP
+  if(curView==='compare')return renderCompareView(p);
+  const has=p&&p.serp&&p.serp.length;
+  if(!has){
+    $('content').innerHTML=`<div class="es">
+      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--tf)" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 16v-4M12 16V8M17 16v-6"/></svg>
+      <h4>Belum ada hasil SERP</h4>
+      <p>Isi keyword di panel kiri lalu klik <strong>Run Analysis</strong>. Pastikan SERP Worker sudah di-set di Settings.</p>
+    </div>`;
+    return;
+  }
+  if(curView==='serp')return renderSerpView(p);
+  if(curView==='matrix')return renderMatrixView(p);
+  if(curView==='gap')return renderGapView(p);
+  if(curView==='bench')return renderBenchView(p);
+  if(curView==='blueprint')return renderBlueprintView(p);
+  if(curView==='detail')return renderDetailView(p);
+}
+function renderSerpView(p){
+  const ourClean=ourDomain();
+  let rows=p.serp.map(s=>{
+    const ours=ourClean&&s.domain.includes(ourClean);
+    const plat=s.platform||'';
+    const typeCell=s.isOurExtra
+      ? `<span class="tag-ours">OUR URL</span>`
+      : plat
+        ? `<span class="tag-plat" title="Di-skip dari crawl & gap analysis">${esc(plat)}</span>`
+        : `<span class="tag-web">Website</span>`;
+    return `<tr class="${ours?'ours':''} ${plat?'is-plat':''}">
+      <td class="num">${s.isOurExtra?'>10':s.position}</td>
+      <td><strong>${esc(s.domain)}</strong>${ours&&!s.isOurExtra?' <span class="tag-ours">OURS</span>':''}</td>
+      <td>${typeCell}</td>
+      <td>${esc(s.title)}</td>
+      <td class="snip">${esc(s.snippet)}</td>
+      <td class="urlc"><a href="${esc(s.url)}" target="_blank" rel="noopener" title="${esc(s.url)}">${esc(s.url.replace(/^https?:\/\//,''))}</a></td>
+    </tr>`;}).join('');
+  const platN=p.serp.filter(s=>s.platform).length;
+  const webN=p.serp.length-platN;
+  $('content').innerHTML=`
+    <div class="view-head">
+      <div><h2>SERP Overview</h2><div class="view-sub">"${esc(p.keyword)}" · gl=${esc(p.gl)} hl=${esc(p.hl)}${p.loc?' · '+esc(p.loc):''} · ${p.serp.length} hasil · ${webN} website, ${platN} non-website (skip)${p.fetchedAt?' · '+new Date(p.fetchedAt).toLocaleString('id-ID'):''}</div></div>
+    </div>
+    <table class="dt"><thead><tr>
+      <th class="num">#</th><th>Domain</th><th>Type</th><th>Title</th><th>Snippet</th><th>URL</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// progress UI during crawl
+function renderProgress(p,i,total,s,phase){
+  const pct=Math.round(((i)/total)*100);
+  const isSkip=phase==='skip';
+  $('content').innerHTML=`<div class="es">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.6"><circle cx="12" cy="12" r="9" opacity=".25"/><path d="M21 12a9 9 0 0 0-9-9"/></svg>
+    <h4>${isSkip?'Skip':'Crawling'} ${i+1}/${total}…</h4>
+    <p style="font-family:var(--m);font-size:11px;">${esc(s.domain)}${isSkip&&s.platform?' · '+esc(s.platform)+' (non-website)':''}</p>
+    <div style="width:280px;height:8px;background:var(--s2);border-radius:4px;overflow:hidden;margin-top:6px;"><div style="width:${pct}%;height:100%;background:var(--acc);transition:width .3s;"></div></div>
+    <p style="font-size:10px;color:var(--tf);">Website di-crawl & dideteksi section-nya. Platform non-website (IG/TikTok/YouTube/dll) di-skip. Yang gagal di-skip otomatis.</p>
+  </div>`;
+}
+
+const SEC_NAMES=()=>SECTION_PATTERNS.map(s=>s[0]);
+function notAnalyzed(p){
+  return `<div class="es"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--tf)" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 16v-4M12 16V8M17 16v-6"/></svg><h4>Belum dianalisa</h4><p>Klik <strong>Run Analysis</strong> dulu untuk crawl + deteksi section.</p></div>`;
+}
+
+// ---- Section Matrix ----
+function renderMatrixView(p){
+  const pages=p.pages?p.pages.filter(x=>x):[];
+  if(!pages.length)return $('content').innerHTML=notAnalyzed(p);
+  const names=SEC_NAMES();
+  const ourClean=ourDomain();
+  const ok=pages.filter(x=>!x.failed&&!x.skipped);
+  const freq=names.map(n=>ok.filter(pg=>pg.sections&&pg.sections[n]).length);
+
+  // header: kolom tegak pakai abbr, tooltip nama penuh, data-col untuk hover highlight
+  const head=`<tr>
+    <th class="mx-num mx-sticky-a">#</th>
+    <th class="mx-dom mx-sticky-b">Domain</th>
+    ${names.map((n,i)=>`<th class="mx-col" data-col="${i}" title="${esc(n)}"><span>${esc(secAbbr(n))}</span></th>`).join('')}
+    <th class="mx-num">Σ</th></tr>`;
+
+  const body=pages.sort((a,b)=>a.position-b.position).map(pg=>{
+    const ours=ourClean&&pg.domain.includes(ourClean);
+    if(pg.skipped)return `<tr class="is-plat"><td class="mx-num mx-sticky-a">${pg.position}</td><td class="mx-dom mx-sticky-b"><strong>${esc(pg.domain)}</strong> <span class="tag-plat">${esc(pg.platform||'non-website')}</span></td><td colspan="${names.length+1}" class="skipcell">non-website — di-skip dari analisa</td></tr>`;
+    if(pg.blocked)return `<tr class="fail-row"><td class="mx-num mx-sticky-a">${pg.position}</td><td class="mx-dom mx-sticky-b"><strong>${esc(pg.domain)}</strong> <span class="tag-block">BLOCKED</span></td><td colspan="${names.length+1}" class="failcell">${esc(pg.blockReason||'ditolak situs')} — di-exclude dari gap</td></tr>`;
+    if(pg.notCrawled)return `<tr class="is-plat"><td class="mx-num mx-sticky-a">${pg.position}</td><td class="mx-dom mx-sticky-b"><strong>${esc(pg.domain)}</strong> <span class="tag-skip2">not crawled</span></td><td colspan="${names.length+1}" class="skipcell">di luar limit crawl (hemat RPD)</td></tr>`;
+    if(pg.failed)return `<tr class="fail-row"><td class="mx-num mx-sticky-a">${pg.position}</td><td class="mx-dom mx-sticky-b"><strong>${esc(pg.domain)}</strong> <span class="tag-fail">FAIL</span></td><td colspan="${names.length+1}" class="failcell">crawl gagal — ${esc(pg.error||'')}</td></tr>`;
+    let tot=0;
+    const cells=names.map((n,i)=>{const has=pg.sections&&pg.sections[n];if(has)tot++;return `<td class="mx-cell ${has?'yes':'no'}" data-col="${i}">${has?'✓':''}</td>`;}).join('');
+    return `<tr class="${ours?'ours':''}"><td class="mx-num mx-sticky-a">${pg.position}</td><td class="mx-dom mx-sticky-b"><strong>${esc(pg.domain)}</strong>${ours?' <span class="tag-ours">OURS</span>':''}</td>${cells}<td class="mx-num"><strong>${tot}</strong></td></tr>`;
+  }).join('');
+
+  const freqRow=`<tr class="mx-freq"><td class="mx-num mx-sticky-a"></td><td class="mx-dom mx-sticky-b"><strong>FREKUENSI</strong></td>${freq.map((c,i)=>{const pct=ok.length?c/ok.length:0;const cls=pct>=.7?'hot':pct>=.5?'warm':'';return `<td class="mx-num ${cls}" data-col="${i}" title="${c}/${ok.length} = ${Math.round(pct*100)}%">${c}</td>`;}).join('')}<td class="mx-num"></td></tr>`;
+
+  $('content').innerHTML=`
+    <div class="view-head"><div><h2>Section Matrix</h2><div class="view-sub">${ok.length} website ter-analisa · 19 section · ✓ = ada · hover header buat nama lengkap</div></div>
+      <div class="mx-legend"><span class="mx-lg yes">✓ ada</span><span class="mx-lg hot">≥70%</span><span class="mx-lg warm">≥50%</span></div>
+    </div>
+    <div class="matrix-wrap"><table class="dt matrix"><thead>${head}</thead><tbody>${body}${freqRow}</tbody></table></div>`;
+
+  // hover highlight kolom
+  const tbl=$('content').querySelector('table.matrix');
+  if(tbl){
+    tbl.addEventListener('mouseover',e=>{
+      const c=e.target.closest('[data-col]');tbl.querySelectorAll('.col-hl').forEach(x=>x.classList.remove('col-hl'));
+      if(c){const i=c.dataset.col;tbl.querySelectorAll(`[data-col="${i}"]`).forEach(x=>x.classList.add('col-hl'));}
+    });
+    tbl.addEventListener('mouseleave',()=>tbl.querySelectorAll('.col-hl').forEach(x=>x.classList.remove('col-hl')));
+  }
+}
+
+// ---- Gap Analysis ----
+const PRIO_ORDER={'🔴 CRITICAL':0,'🟡 HIGH':1,'🟢 MEDIUM':2,'✅ COVERED':3,'⭐ ADVANTAGE':4,'⚪ LOW':5};
+function prioClass(pr){if(pr.includes('CRITICAL'))return 'p-crit';if(pr.includes('HIGH'))return 'p-high';if(pr.includes('MEDIUM'))return 'p-med';if(pr.includes('COVERED'))return 'p-cov';if(pr.includes('ADVANTAGE'))return 'p-adv';return 'p-low';}
+function renderGapView(p){
+  if(!p.gap)return $('content').innerHTML=notAnalyzed(p);
+  const noOur=p.gap.every(g=>g.weHave===null);
+  const sorted=[...p.gap].sort((a,b)=>(PRIO_ORDER[a.priority]??9)-(PRIO_ORDER[b.priority]??9));
+  const rows=sorted.map(g=>`<tr class="${prioClass(g.priority)}">
+    <td><strong>${esc(g.section)}</strong></td>
+    <td class="num">${g.freq}/${g.total}</td>
+    <td class="num">${g.pct}%</td>
+    ${noOur?'':`<td>${g.weHave?'✅ PUNYA':'❌ BELUM'}</td>`}
+    <td><span class="prio">${esc(g.priority)}</span></td>
+    <td>${esc(g.action)}</td>
+    <td class="snip">${esc(g.competitors.slice(0,5).join(', '))}</td>
+  </tr>`).join('');
+  $('content').innerHTML=`
+    <div class="view-head"><div><h2>Gap Analysis</h2><div class="view-sub">${noOur?'Mode LP baru (tanpa domain) — frekuensi section di top 10 website':'Diurut prioritas: CRITICAL → LOW'}</div></div></div>
+    <div class="gap-legend">Threshold (dari % website yang punya section): <span class="gl crit">CRITICAL ≥70%${noOur?'':' & kamu belum punya'}</span><span class="gl high">HIGH ≥50%</span><span class="gl med">MEDIUM ≥30%</span>${noOur?'':'<span class="gl adv">ADVANTAGE = kamu punya & langka</span><span class="gl cov">COVERED = kamu punya</span>'}<span class="gl low">LOW = sisanya</span></div>
+    <table class="dt"><thead><tr><th>Section</th><th class="num">Freq</th><th class="num">%</th>${noOur?'':'<th>Status Kita</th>'}<th>Priority</th><th>Action</th><th>Kompetitor</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ---- Content Benchmark ----
+function renderBenchView(p){
+  if(!p.bench||!p.bench.length)return $('content').innerHTML=p.pages&&p.pages.length?`<div class="es"><h4>Benchmark tidak tersedia</h4><p>Butuh minimal 1 halaman kompetitor ter-crawl.</p></div>`:notAnalyzed(p);
+  const rows=p.bench.map(b=>{
+    const cls=b.status.includes('Above')?'p-cov':b.status.includes('Below')?'p-crit':'';
+    return `<tr class="${cls}"><td><strong>${esc(b.label)}</strong></td><td class="num">${b.avg}</td><td class="num">${b.min}</td><td class="num">${b.max}</td><td class="num">${b.ourVal===null?'—':b.ourVal}</td><td>${esc(b.status)}</td></tr>`;
+  }).join('');
+  $('content').innerHTML=`
+    <div class="view-head"><div><h2>Content Benchmark</h2><div class="view-sub">Metrics LP kita vs rata-rata kompetitor</div></div></div>
+    <table class="dt"><thead><tr><th>Metric</th><th class="num">Avg</th><th class="num">Min</th><th class="num">Max</th><th class="num">Kita</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ---- LP Blueprint ----
+function renderBlueprintView(p){
+  if(!p.blueprint)return $('content').innerHTML=notAnalyzed(p);
+  const b=p.blueprint;
+  const okN=crawledPages(p).length;
+  const noOur=p.gap&&p.gap.every(g=>g.weHave===null);
+  // pesan kontekstual saat kartu kosong — beda untuk mode domain vs LP baru
+  const emptyMsg=(kind)=>{
+    if(okN<2)return '— data terlalu sedikit ('+okN+' website ter-crawl). Run ulang / cek crawl.';
+    if(noOur){
+      return kind==='must'
+        ? '— tidak ada section yang dipunyai ≥70% website. Kompetitor strukturnya beragam (tidak ada pola dominan).'
+        : '— tidak ada section di tingkat ini.';
+    }
+    return kind==='must'
+      ? '— ✅ bagus! Kamu sudah punya semua section yang dimiliki mayoritas kompetitor.'
+      : kind==='adv'
+        ? '— belum ada section unik yang jadi keunggulanmu.'
+        : '— tidak ada gap di tingkat ini.';
+  };
+  const card=(cls,title,note,items,kind)=>`<div class="bp-card ${cls}"><div class="bp-h">${title}</div><div class="bp-note">${esc(note)}</div><div class="bp-items">${items&&items.length?items.map(s=>`<span class="bp-chip">${esc(s)}</span>`).join(''):`<span class="bp-empty">${esc(emptyMsg(kind))}</span>`}</div></div>`;
+  $('content').innerHTML=`
+    <div class="view-head"><div><h2>LP Blueprint</h2><div class="view-sub">Rangkuman dari Gap Analysis · ${okN} website ter-analisa${noOur?' · mode LP baru (tanpa domain)':' · dibandingkan domain kamu'}</div></div></div>
+    <div class="gap-legend">Kartu kosong = tidak ada section di tingkat itu (hover/baca keterangan di dalam kartu untuk artinya).</div>
+    <div class="bp-grid">
+      ${card('p-crit','🔴 MUST HAVE','Wajib ada — dipunyai ≥70% website kompetitor',b.critical,'must')}
+      ${card('p-high','🟡 SHOULD HAVE','Sangat disarankan — dipunyai ≥50%',b.high,'should')}
+      ${card('p-med','🟢 NICE TO HAVE','Differentiator — dipunyai ≥30%',b.medium,'nice')}
+      ${card('p-adv','⭐ OUR ADVANTAGE','Keunggulan kamu — section yang kamu punya tapi jarang kompetitor punya',b.advantage,'adv')}
+      ${b.topComp?`<div class="bp-card p-cov"><div class="bp-h">📊 BENCHMARK TARGET</div><div class="bp-note">Kompetitor terlengkap: <strong>${esc(b.topComp)}</strong> dengan <strong>${b.topCount}</strong> section. Target: samai atau lampaui.</div></div>`:''}
+    </div>`;
+}
+
+// ---- Page Detail (heading hierarchy + page type) ----
+function renderDetailView(p){
+  const pages=p.pages?p.pages.filter(x=>x):[];
+  if(!pages.length)return $('content').innerHTML=notAnalyzed(p);
+  const ourClean=ourDomain();
+  const blocks=pages.sort((a,b)=>a.position-b.position).map(pg=>{
+    const ours=ourClean&&pg.domain.includes(ourClean);
+    if(pg.skipped)return `<div class="pd-card skip"><div class="pd-head"><span class="pd-pos">#${pg.position}</span><strong>${esc(pg.domain)}</strong> <span class="tag-plat">${esc(pg.platform||'non-website')}</span></div><div class="pd-err" style="color:var(--td);font-style:normal;">Platform non-website — tidak di-crawl. Hanya dicatat keberadaannya di SERP. <a href="${esc(pg.url)}" target="_blank" rel="noopener" style="color:var(--acc);">buka →</a></div></div>`;
+    if(pg.blocked)return `<div class="pd-card fail"><div class="pd-head"><span class="pd-pos">#${pg.position}</span><strong>${esc(pg.domain)}</strong> <span class="tag-block">BLOCKED</span></div><div class="pd-err">${esc(pg.blockReason||'ditolak situs')}. Situs ini menolak crawl (anti-bot) atau kontennya dirender JavaScript — di-exclude dari gap/benchmark biar angka ga melenceng. <a href="${esc(pg.url)}" target="_blank" rel="noopener" style="color:var(--acc);">cek manual →</a></div></div>`;
+    if(pg.notCrawled)return `<div class="pd-card skip"><div class="pd-head"><span class="pd-pos">#${pg.position}</span><strong>${esc(pg.domain)}</strong> <span class="tag-skip2">not crawled</span></div><div class="pd-err" style="color:var(--td);font-style:normal;">Di luar limit crawl (kamu pilih Top ${P()?.numCrawl||10}). Naikkan limit kalau mau ikutkan. <a href="${esc(pg.url)}" target="_blank" rel="noopener" style="color:var(--acc);">buka →</a></div></div>`;
+    if(pg.failed)return `<div class="pd-card fail"><div class="pd-head"><span class="pd-pos">#${pg.position}</span><strong>${esc(pg.domain)}</strong> <span class="tag-fail">FAIL</span></div><div class="pd-err">${esc(pg.error||'crawl gagal')}</div></div>`;
+    const secsOn=Object.entries(pg.sections||{}).filter(([k,v])=>v).map(([k])=>k);
+    const headings=[...pg.h1.map(t=>['h1',t]),...pg.h2.map(t=>['h2',t]),...pg.h3.map(t=>['h3',t])];
+    return `<div class="pd-card ${ours?'ours':''}">
+      <div class="pd-head"><span class="pd-pos">#${pg.position}</span><strong>${esc(pg.domain)}</strong>${ours?' <span class="tag-ours">OURS</span>':''}<span class="pd-type">${esc(pg.pageType||'')}</span>${pg.sectionSource?`<span class="pd-src">${esc(pg.sectionSource)}</span>`:''}</div>
+      <div class="pd-title">${esc(pg.meta_title||'(no title)')}</div>
+      <div class="pd-meta">${esc(pg.meta_description||'')}</div>
+      <div class="pd-stats">words:${pg.word_count} · H2:${pg.h2_count} · H3:${pg.h3_count} · img:${pg.image_count} · vid:${pg.video_count} · form:${pg.form_count} · WA:${pg.wa_link_count} · CTA:${pg.cta_button_count} · schema:${pg.has_schema?'yes':'no'}</div>
+      ${pg.cta_button_texts&&pg.cta_button_texts.length?`<div class="pd-cta">CTA: ${pg.cta_button_texts.map(t=>`<span class="bp-chip">${esc(t)}</span>`).join('')}</div>`:''}
+      <div class="pd-sub">Heading hierarchy</div>
+      <div class="pd-headings">${headings.length?headings.map(([tag,txt])=>`<div class="hd hd-${tag}"><span class="hd-tag">${tag}</span>${esc(txt)}</div>`).join(''):'<span class="bp-empty">— no headings —</span>'}</div>
+      <div class="pd-sub">Sections detected (${secsOn.length})</div>
+      <div class="bp-items">${secsOn.length?secsOn.map(s=>`<span class="bp-chip">${esc(s)}</span>`).join(''):'<span class="bp-empty">— none —</span>'}</div>
+      ${pg._extraSections&&pg._extraSections.length?`<div class="pd-sub">Extra sections (AI-discovered)</div><div class="bp-items">${pg._extraSections.map(s=>`<span class="bp-chip" style="border-color:var(--accBd);color:var(--acc);">${esc(s)}</span>`).join('')}</div>`:''}
+    </div>`;
+  }).join('');
+  $('content').innerHTML=`<div class="view-head"><div><h2>Page Detail</h2><div class="view-sub">Struktur konten tiap kompetitor — heading hierarchy + jenis halaman</div></div></div><div class="pd-list">${blocks}</div>`;
+}
+
+// ---------- COMPARE 1-on-1 ----------
+let compareState={a:null,b:null,busy:false}; // a,b = parsed page objects
+function renderCompareView(p){
+  const a=compareState.a,b=compareState.b;
+  const form=`
+    <div class="view-head"><div><h2>Compare 1-on-1</h2><div class="view-sub">Bandingkan struktur 2 URL apa pun — mis. LP kamu (belum page 1) vs kompetitor di page 1</div></div></div>
+    <div class="cmp-form">
+      <div class="cmp-in"><label>URL A (mis. punya kamu)</label><input type="text" id="cmpUrlA" placeholder="https://situs-kamu.com/lp" value="${a?esc(a.url):''}"></div>
+      <div class="cmp-vs">VS</div>
+      <div class="cmp-in"><label>URL B (mis. kompetitor)</label><input type="text" id="cmpUrlB" placeholder="https://kompetitor.com/lp" value="${b?esc(b.url):''}"></div>
+      <button class="btn btn-p" style="width:auto;padding:9px 20px;" onclick="runCompare()" ${compareState.busy?'disabled':''}>${compareState.busy?'Crawling…':'Compare →'}</button>
+    </div>
+    <div class="hint" style="margin-bottom:16px;">Crawl lewat metode yang sama dengan analisa utama (${esc(settings.proxy==='worker'?'Cloudflare Worker':settings.proxy)}). Section dideteksi pakai mode ${esc(settings.aiActive&&P()?.detect==='gemini'?'Gemini':'regex')} biar apple-to-apple.</div>`;
+
+  if(compareState.busy){
+    return $('content').innerHTML=form+`<div class="es"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.6"><circle cx="12" cy="12" r="9" opacity=".25"/><path d="M21 12a9 9 0 0 0-9-9"/></svg><p>Meng-crawl & menganalisa kedua URL…</p></div>`;
+  }
+  if(!a||!b){
+    return $('content').innerHTML=form+`<div class="es" style="height:auto;padding:40px;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--tf)" stroke-width="1.4"><path d="M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7"/></svg><p>Isi 2 URL lalu klik Compare. Hasilnya tampil berdampingan di sini.</p></div>`;
+  }
+
+  // build comparison
+  const names=SEC_NAMES();
+  const secRows=names.map(n=>{
+    const av=a.sections&&a.sections[n],bv=b.sections&&b.sections[n];
+    let badge='',cls='';
+    if(av&&!bv){badge='A unggul';cls='cmp-a';}
+    else if(!av&&bv){badge='B unggul';cls='cmp-b';}
+    else if(av&&bv){badge='sama-sama ada';cls='cmp-both';}
+    else{badge='dua-duanya nggak';cls='cmp-none';}
+    return `<tr class="${cls}"><td>${esc(n)}</td><td class="cc">${av?'✓':'·'}</td><td class="cc">${bv?'✓':'·'}</td><td class="cmp-note">${badge}</td></tr>`;
+  }).join('');
+
+  const aGap=names.filter(n=>(b.sections&&b.sections[n])&&!(a.sections&&a.sections[n]));
+  const metric=(la,va,vb)=>{const aw=va>=vb;return `<tr><td>${la}</td><td class="cc ${aw?'win':''}">${va}</td><td class="cc ${!aw?'win':''}">${vb}</td></tr>`;};
+
+  $('content').innerHTML=form+`
+    <div class="cmp-cards">
+      ${compareCard('A',a)}
+      ${compareCard('B',b)}
+    </div>
+    ${aGap.length?`<div class="cmp-gap-box"><strong>⚠ URL B punya, URL A belum (${aGap.length}):</strong> ${aGap.map(s=>`<span class="bp-chip">${esc(s)}</span>`).join('')}</div>`:`<div class="cmp-gap-box ok"><strong>✓ URL A sudah punya semua section yang ada di URL B.</strong></div>`}
+    <div class="cmp-tables">
+      <div>
+        <div class="pd-sub">Section comparison (19)</div>
+        <table class="dt cmp-tbl"><thead><tr><th>Section</th><th class="cc">A</th><th class="cc">B</th><th>Catatan</th></tr></thead><tbody>${secRows}</tbody></table>
+      </div>
+      <div>
+        <div class="pd-sub">Content metrics</div>
+        <table class="dt cmp-tbl"><thead><tr><th>Metric</th><th class="cc">A</th><th class="cc">B</th></tr></thead><tbody>
+          ${metric('Word count',a.word_count,b.word_count)}
+          ${metric('H2 headings',a.h2_count,b.h2_count)}
+          ${metric('H3 headings',a.h3_count,b.h3_count)}
+          ${metric('Images',a.image_count,b.image_count)}
+          ${metric('Videos',a.video_count,b.video_count)}
+          ${metric('Forms',a.form_count,b.form_count)}
+          ${metric('WhatsApp links',a.wa_link_count,b.wa_link_count)}
+          ${metric('CTA buttons',a.cta_button_count,b.cta_button_count)}
+        </tbody></table>
+      </div>
+    </div>`;
+}
+function compareCard(label,pg){
+  const secN=Object.values(pg.sections||{}).filter(Boolean).length;
+  return `<div class="cmp-card">
+    <div class="cmp-card-h"><span class="cmp-badge">${label}</span><strong>${esc(pg.domain)}</strong><span class="pd-type">${esc(pg.pageType||'')}</span></div>
+    <div class="pd-title">${esc(pg.meta_title||'(no title)')}</div>
+    <div class="pd-meta">${esc(pg.meta_description||'')}</div>
+    <div class="cmp-big">${secN}<span>/19 section</span></div>
+    <div class="pd-stats">words:${pg.word_count} · H2:${pg.h2_count} · CTA:${pg.cta_button_count} · form:${pg.form_count} · WA:${pg.wa_link_count} · schema:${pg.has_schema?'yes':'no'}</div>
+  </div>`;
+}
+async function compareCrawlOne(url){
+  const html=await crawlPage(url);
+  const page=parsePage(html,url);
+  page.url=url;
+  try{page.domain=new URL(url).hostname.replace(/^www\./,'');}catch(e){page.domain=url;}
+  const useGemini=(P()?.detect==='gemini')&&!!settings.aiActive;
+  if(useGemini){try{page.sections=await detectSectionsGemini(page,html);}catch(e){page.sections=detectSectionsRegex(html);}}
+  else page.sections=detectSectionsRegex(html);
+  return page;
+}
+async function runCompare(){
+  if(compareState.busy)return;
+  const ua=($('cmpUrlA').value||'').trim(),ub=($('cmpUrlB').value||'').trim();
+  if(!/^https?:\/\//.test(ua)||!/^https?:\/\//.test(ub)){toast('Isi 2 URL valid (https://...)','err');return;}
+  if(settings.proxy==='worker'&&!serpWorker()){toast('Set Worker dulu di Settings','err');return;}
+  compareState.busy=true;renderCompareView();
+  try{
+    const [a,b]=await Promise.all([compareCrawlOne(ua),compareCrawlOne(ub)]);
+    compareState.a=a;compareState.b=b;compareState.busy=false;
+    renderCompareView();toast('Compare selesai!');
+  }catch(e){
+    console.error(e);compareState.busy=false;renderCompareView();
+    toast('Compare gagal: '+e.message,'err');
+  }
+}
+$('viewTabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;curView=b.dataset.view;renderView();});
+
+// ---------- Run — Stage 2: Fetch SERP ----------
+let analysisBusy=false;
+async function runAnalysis(){
+  if(analysisBusy)return;
+  let p=P();
+  const kw=$('inKeyword').value.trim();
+  if(!kw){toast('Isi keyword dulu!','err');return;}
+  if(!p){addProject();p=P();}
+  else{p.keyword=kw;p.domain=$('inDomain').value.trim();p.gl=$('inGl').value.trim()||'id';p.hl=$('inHl').value.trim()||'id';p.loc=$('inLoc').value.trim();p.detect=$('inDetect').value;p.numCrawl=parseInt($('inNum').value)||10;p.name=kw;}
+  if(!settings.serpActive){toast('Set SERP Worker dulu di Settings','err');openSettings('serp');return;}
+
+  analysisBusy=true;
+  const btn=document.querySelector('.btn-p');
+  if(btn){btn.disabled=true;btn.textContent='Fetching SERP...';}
+  $('serpSt').className='st-pill busy';$('serpLbl').textContent='SerpAPI: fetching';
+  curView='serp';renderViewTabs();
+  $('content').innerHTML=`<div class="es"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.6"><circle cx="12" cy="12" r="9" opacity=".25"/><path d="M21 12a9 9 0 0 0-9-9"/></svg><h4>Mengambil top ${'10'} hasil…</h4><p>"${esc(kw)}" · gl=${esc(p.gl)} hl=${esc(p.hl)}${p.loc?' · '+esc(p.loc):''}</p></div>`;
+
+  try{
+    const d=await serpFetch({q:kw,gl:p.gl,hl:p.hl,num:10,location:p.loc,google_domain:'google.co.'+p.gl});
+    const items=(d.organic_results||[]).slice(0,10);
+    if(!items.length)throw new Error('0 hasil organic. Coba keyword/lokasi lain.');
+    p.serp=items.map(it=>{
+      let domain='';try{domain=new URL(it.link).hostname.replace(/^www\./,'');}catch(e){domain=it.link||'';}
+      return {position:it.position||0,title:it.title||'',url:it.link||'',domain,snippet:it.snippet||'',platform:platformOf(domain)};
+    });
+    // Kalau Our URL diisi & domainnya BELUM ada di SERP → tambahkan sebagai peserta ekstra (#11+)
+    const ourD=ourDomain();
+    if(ourD && !p.serp.some(s=>s.domain.includes(ourD))){
+      let ourUrl=(p.domain||'').trim();
+      if(!/^https?:\/\//.test(ourUrl))ourUrl='https://'+ourUrl;
+      p.serp.push({position:p.serp.length+1,title:'(Our URL — di luar top 10)',url:ourUrl,domain:ourD,snippet:'',platform:'',isOurExtra:true});
+      toast('Our URL ditambahkan sebagai pembanding (di luar top 10)','info');
+    }
+    p.pages=[];p.sections={};p.fetchedAt=Date.now();
+    saveProjects();renderProjects();renderActiveInfo();
+
+    // ---- Stage 3+4: crawl + parse + detect (per-page, skip-on-fail) ----
+    const useGemini=p.detect==='gemini'&&!!settings.aiActive;
+    if(p.detect==='gemini'&&!settings.aiActive)toast('Gemini key belum di-set → pakai regex','info');
+    const total=p.serp.length;
+    const limit=p.numCrawl||10;
+    let crawledCount=0; // berapa WEBSITE (non-platform) yang sudah di-crawl
+    $('serpLbl').textContent='SerpAPI: crawling';
+
+    for(let i=0;i<total;i++){
+      const s=p.serp[i];
+      let page={position:s.position,domain:s.domain,url:s.url,failed:false,sectionSource:'',platform:s.platform||'',isOurExtra:!!s.isOurExtra};
+      // SKIP non-website platforms (IG/TikTok/YouTube/Wikipedia/marketplace/forum)
+      if(s.platform){
+        page.skipped=true;page.sections={};
+        p.pages[i]=page;
+        renderProgress(p,i,total,s,'skip');
+        continue;
+      }
+      // LIMIT: kalau sudah capai jumlah website yang diminta, sisanya ga di-crawl
+      // (kecuali Our URL extra — selalu di-crawl biar bisa dibandingkan)
+      if(crawledCount>=limit && !s.isOurExtra){
+        page.notCrawled=true;page.sections={};
+        p.pages[i]=page;
+        continue;
+      }
+      crawledCount++;
+      renderProgress(p,i,total,s,'crawl');
+      try{
+        const html=await crawlPage(s.url);
+        // Deteksi balasan anti-bot / halaman tantangan / shell kosong
+        const blocked=isBlockedHtml(html);
+        if(blocked){
+          page.blocked=true;page.blockReason=blocked;page.sections={};
+          Object.assign(page,parsePage(html,s.url)); // tetap simpan apa adanya (mungkin ada title)
+          page.sections={}; // jangan anggap punya section
+        }else{
+          Object.assign(page,parsePage(html,s.url));
+          let secs=null;
+          if(useGemini){
+            try{ secs=await detectSectionsGemini(page,html); page.sectionSource='gemini'; }
+            catch(ge){ console.warn('Gemini fail, fallback regex:',ge.message); secs=detectSectionsRegex(html); page.sectionSource='regex(fallback)'; }
+          }else{
+            secs=detectSectionsRegex(html); page.sectionSource='regex';
+          }
+          page.sections=secs;
+        }
+      }catch(err){
+        console.warn('Crawl gagal',s.url,err.message);
+        page.failed=true;page.error=err.message;page.sections={};
+      }
+      p.pages[i]=page;
+      saveProjects();renderActiveInfo();
+      await new Promise(r=>setTimeout(r,200)); // be polite
+    }
+
+    // ---- Stage 5: gap / bench / blueprint ----
+    p.gap=buildGap(p);
+    p.bench=buildBench(p);
+    p.blueprint=buildBlueprint(p.gap,p);
+    p.analyzedAt=Date.now();
+    saveProjects();renderProjects();renderActiveInfo();
+
+    curView='serp';renderView();
+    const okN=p.pages.filter(x=>x&&!x.failed&&!x.skipped&&!x.blocked&&!x.notCrawled).length,failN=p.pages.filter(x=>x&&x.failed).length,skN=p.pages.filter(x=>x&&x.skipped).length,blN=p.pages.filter(x=>x&&x.blocked).length;
+    const crit=p.gap.filter(g=>g.priority.includes('CRITICAL')).length;
+    toast(`Selesai! ${okN} website ter-analisa${skN?`, ${skN} non-website`:''}${blN?`, ${blN} blocked`:''}${failN?`, ${failN} gagal`:''}. ${crit} gap kritis.`);
+    if(syncCfg.autoPush&&syncCfg.token&&syncCfg.gistId)scheduleAutoPush();
+  }catch(e){
+    console.error(e);
+    $('serpSt').className='st-pill err';
+    $('content').innerHTML=`<div class="es"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><h4>Fetch SERP gagal</h4><p>${esc(e.message)}</p><button class="btn btn-acc btn-sm" onclick="runAnalysis()">Coba lagi</button></div>`;
+    toast('Fetch gagal: '+e.message,'err');
+  }finally{
+    analysisBusy=false;
+    if(btn){btn.disabled=false;btn.textContent='Run Analysis';}
+    updateStatusPills();
+  }
+}
+
+// ---------- Settings modal ----------
+function openSettings(focus){
+  // populate model + proxy
+  $('aiModel').value=settings.aiModel;
+  $('proxySel').value=settings.proxy;
+  renderSerpKeys();renderAiKeys();renderQuota();
+  $('settingsMo').classList.add('active');
+  if(focus==='serp')setTimeout(()=>$('serpWurl').focus(),100);
+  if(focus==='ai')setTimeout(()=>$('aiKeyVal').focus(),100);
+}
+function closeSettings(){$('settingsMo').classList.remove('active');}
+
+// SerpAPI keys
+// active worker object {name,url,secret}
+function serpWorker(){return settings.serpKeys.find(k=>k.url===settings.serpActive)||null;}
+function renderSerpKeys(){
+  const el=$('serpKeyList');
+  if(!settings.serpKeys.length){el.innerHTML='<div class="key-empty">Belum ada Worker tersimpan.</div>';return;}
+  el.innerHTML=settings.serpKeys.map((k,i)=>{
+    const active=k.url===settings.serpActive;
+    const host=(()=>{try{return new URL(k.url).hostname;}catch(e){return k.url;}})();
+    return `<div class="key-row ${active?'active':''}">
+      <input type="radio" name="serpPick" ${active?'checked':''} onchange="pickSerp(${i})">
+      <span class="kn" onclick="pickSerp(${i})">${esc(k.name)} <span class="ku">${esc(host)}${k.secret?' · 🔒':''}</span></span>
+      <button class="kdel" onclick="delSerpKey(${i})" title="Hapus">×</button>
+    </div>`;}).join('');
+}
+function addSerpWorker(){
+  const name=($('serpKeyName').value||'').trim()||('Worker '+(settings.serpKeys.length+1));
+  let url=($('serpWurl').value||'').trim().replace(/\/+$/,'');
+  const secret=($('serpSecret').value||'').trim();
+  if(!/^https?:\/\/.+/.test(url)){toast('Worker URL ga valid (harus https://...)','err');return;}
+  if(settings.serpKeys.find(k=>k.url===url)){toast('Worker URL ini sudah ada','err');return;}
+  settings.serpKeys.push({name,url,secret});settings.serpActive=url;
+  $('serpKeyName').value='';$('serpWurl').value='';$('serpSecret').value='';
+  saveSettings(true);renderSerpKeys();updateStatusPills();toast('Worker disimpan');
+}
+function pickSerp(i){const k=settings.serpKeys[i];if(!k)return;settings.serpActive=k.url;saveSettings(true);renderSerpKeys();updateStatusPills();}
+function delSerpKey(i){const k=settings.serpKeys[i];if(!k)return;if(!confirm(`Hapus "${k.name}"?`))return;const wasActive=k.url===settings.serpActive;settings.serpKeys.splice(i,1);if(wasActive)settings.serpActive=settings.serpKeys[0]?.url||'';saveSettings(true);renderSerpKeys();updateStatusPills();}
+
+// Gemini keys
+function renderAiKeys(){
+  const el=$('aiKeyList');
+  if(!settings.aiKeys.length){el.innerHTML='<div class="key-empty">Belum ada Gemini key.</div>';return;}
+  el.innerHTML=settings.aiKeys.map((k,i)=>{
+    const active=k.key===settings.aiActive;
+    let used=0;try{const kid=keyId(k.key);used=(settings.aiUsage[kid]&&settings.aiUsage[kid][settings.aiModel])?settings.aiUsage[kid][settings.aiModel].rpd:0;}catch(e){}
+    return `<div class="key-row ${active?'active':''}">
+      <input type="radio" name="aiPick" ${active?'checked':''} onchange="pickAi(${i})">
+      <span class="kn" onclick="pickAi(${i})">${esc(k.name)} <span class="ku">${used}/${RPD_LIMIT}</span></span>
+      <button class="kdel" onclick="delAiKey(${i})" title="Hapus">×</button>
+    </div>`;}).join('');
+}
+function addAiKey(){
+  const name=($('aiKeyName').value||'').trim()||('Key '+(settings.aiKeys.length+1));
+  const key=($('aiKeyVal').value||'').trim();
+  if(key.length<10){toast('Paste Gemini key valid dulu','err');return;}
+  if(settings.aiKeys.find(k=>k.key===key)){toast('Key ini sudah ada','err');return;}
+  settings.aiKeys.push({name,key});settings.aiActive=key;
+  $('aiKeyName').value='';$('aiKeyVal').value='';
+  saveSettings(true);renderAiKeys();renderQuota();updateStatusPills();toast('Gemini key disimpan');
+}
+function pickAi(i){const k=settings.aiKeys[i];if(!k)return;settings.aiActive=k.key;saveSettings(true);renderAiKeys();renderQuota();updateStatusPills();}
+function delAiKey(i){const k=settings.aiKeys[i];if(!k)return;if(!confirm(`Hapus "${k.name}"?`))return;const wasActive=k.key===settings.aiActive;settings.aiKeys.splice(i,1);if(wasActive)settings.aiActive=settings.aiKeys[0]?.key||'';saveSettings(true);renderAiKeys();renderQuota();updateStatusPills();}
+
+// Tests
+// Build the Worker request URL from params
+function buildSerpUrl(w,{q,gl,hl,num,location,google_domain}){
+  const u=new URL(w.url);
+  u.searchParams.set('q',q);
+  u.searchParams.set('gl',gl||'id');
+  u.searchParams.set('hl',hl||'id');
+  u.searchParams.set('num',num||10);
+  if(location)u.searchParams.set('location',location);
+  if(google_domain)u.searchParams.set('google_domain',google_domain);
+  if(w.secret)u.searchParams.set('secret',w.secret);
+  return u.toString();
+}
+// Core SERP fetch via Worker → returns {organic_results,...} or throws
+async function serpFetch(opts){
+  const w=serpWorker();
+  if(!w)throw new Error('Belum ada Worker aktif. Set di Settings.');
+  const r=await fetch(buildSerpUrl(w,opts),{headers:w.secret?{'x-app-secret':w.secret}:{}});
+  let d;try{d=await r.json();}catch(e){throw new Error('Worker balas bukan JSON (HTTP '+r.status+')');}
+  if(!r.ok||d.error)throw new Error(d.error||('HTTP '+r.status));
+  return d;
+}
+async function testSerp(){
+  if(!settings.serpActive){toast('Simpan & pilih Worker dulu','err');return;}
+  const b=$('testSerpBtn');b.disabled=true;b.textContent='Testing...';
+  try{
+    const d=await serpFetch({q:'test',gl:'id',hl:'id',num:3});
+    const n=(d.organic_results||[]).length;
+    toast(`Worker OK! ${n} hasil diterima.`);
+  }catch(e){console.error(e);toast('Worker test gagal: '+e.message,'err');}
+  finally{b.disabled=false;b.textContent='Test Worker';}
+}
+async function testAi(){
+  if(!settings.aiActive){toast('Pilih/simpan Gemini key dulu','err');return;}
+  const model=$('aiModel').value;
+  const b=$('testAiBtn');b.disabled=true;b.textContent='Testing...';
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${settings.aiActive}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:'Reply with just: OK'}]}]})
+    });
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error?.message||('HTTP '+r.status));}
+    toast('Gemini OK! Model jalan.');
+  }catch(e){console.error(e);toast('Gemini test gagal: '+e.message,'err');}
+  finally{b.disabled=false;b.textContent='Test Gemini';}
+}
+
+// ---------- Sync ----------
+function openSyncMo(){$('syncTok').value=syncCfg.token;$('syncGid').value=syncCfg.gistId;$('syncAuto').checked=!!syncCfg.autoPush;$('syncMo').classList.add('active');}
+function closeSyncMo(){$('syncMo').classList.remove('active');}
+function saveSync(){try{localStorage.setItem(LS_SYNC,JSON.stringify(syncCfg));}catch(e){}}
+function syncSaveCfg(){
+  syncCfg.token=$('syncTok').value.trim();syncCfg.gistId=$('syncGid').value.trim();syncCfg.autoPush=$('syncAuto').checked;
+  if(!syncCfg.token||!syncCfg.gistId){toast('Token & Gist ID wajib diisi','err');return;}
+  saveSync();updateStatusPills();closeSyncMo();toast('Sync configured! Coba Push.');
+}
+function syncDisconnect(){if(!confirm('Disconnect sync? Token & Gist ID dihapus dari browser ini.'))return;syncCfg={token:'',gistId:'',autoPush:false,lastSync:null};saveSync();updateStatusPills();closeSyncMo();toast('Disconnected');}
+let autoPushTimer=null;
+function scheduleAutoPush(){clearTimeout(autoPushTimer);autoPushTimer=setTimeout(()=>syncPush(),3000);}
+
+async function syncPush(){
+  if(!syncCfg.token||!syncCfg.gistId){toast('Setup sync dulu','err');openSyncMo();return;}
+  if(syncBusy)return;syncBusy=true;updateStatusPills();
+  try{
+    const r=await fetch('https://api.github.com/gists/'+syncCfg.gistId,{
+      method:'PATCH',
+      headers:{'Authorization':'token '+syncCfg.token,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+      body:JSON.stringify({files:{'lp-competitor-analyzer.json':{content:JSON.stringify(projects,null,2)}}})
+    });
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||('HTTP '+r.status));}
+    syncCfg.lastSync=Date.now();saveSync();toast('Pushed ke cloud!');
+  }catch(e){console.error(e);$('syncSt').className='st-pill err';toast('Push gagal: '+e.message,'err');}
+  finally{syncBusy=false;updateStatusPills();}
+}
+async function syncPull(){
+  if(!syncCfg.token||!syncCfg.gistId){toast('Setup sync dulu','err');openSyncMo();return;}
+  if(syncBusy)return;
+  if(projects.length&&!confirm('Pull akan menimpa data lokal dengan data cloud. Lanjut?'))return;
+  syncBusy=true;updateStatusPills();
+  try{
+    const r=await fetch('https://api.github.com/gists/'+syncCfg.gistId,{headers:{'Authorization':'token '+syncCfg.token,'Accept':'application/vnd.github+json'}});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||('HTTP '+r.status));}
+    const gist=await r.json();
+    const file=gist.files['lp-competitor-analyzer.json']||Object.values(gist.files)[0];
+    if(!file)throw new Error('No data file di gist');
+    let content=file.content;
+    if(file.truncated&&file.raw_url){content=await (await fetch(file.raw_url)).text();}
+    const data=JSON.parse(content||'[]');
+    if(!Array.isArray(data))throw new Error('Format data salah (harus array)');
+    projects=data;activeProj=projects[0]?.id||null;
+    saveProjects();syncCfg.lastSync=Date.now();saveSync();
+    renderProjects();renderActiveInfo();renderView();
+    toast(`Pulled ${projects.length} analisa!`);
+  }catch(e){console.error(e);$('syncSt').className='st-pill err';toast('Pull gagal: '+e.message,'err');}
+  finally{syncBusy=false;updateStatusPills();}
+}
+
+// ---------- Keyboard ----------
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){document.querySelectorAll('.mo.active').forEach(m=>m.classList.remove('active'));}
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();syncPush();}
+});
+
+/* =========================================================
+   EXPORT — Stage 6/7 : XLSX (multi-sheet) · CSV · PNG/SVG
+   ========================================================= */
+function dlBlob(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+function safeName(s){return (s||'lp-analysis').replace(/[^\w.-]+/g,'_').slice(0,60);}
+
+function exportXLSX(){
+  const p=P();
+  if(!p||!p.serp||!p.serp.length){toast('Belum ada hasil. Run Analysis dulu.','err');return;}
+  if(typeof XLSX==='undefined'){toast('Library XLSX belum termuat — cek koneksi.','err');return;}
+  const names=SEC_NAMES();
+  const ok=crawledPages(p);
+  const wb=XLSX.utils.book_new();
+
+  // Sheet 1: SERP Overview
+  const s1=[['#','Domain','Type','Title','Snippet','URL']];
+  p.serp.forEach(s=>s1.push([s.position,s.domain,s.platform||'Website',s.title,s.snippet,s.url]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s1),'1. SERP');
+
+  // Sheet 2: Section Matrix
+  const s2=[['#','Domain',...names,'Σ']];
+  [...p.pages].filter(Boolean).sort((a,b)=>a.position-b.position).forEach(pg=>{
+    if(pg.skipped){s2.push([pg.position,pg.domain,...names.map(()=>'(skip)'),'']);return;}
+    if(pg.failed){s2.push([pg.position,pg.domain,...names.map(()=>'(fail)'),'']);return;}
+    let tot=0;const cells=names.map(n=>{const has=pg.sections&&pg.sections[n];if(has)tot++;return has?'Y':'';});
+    s2.push([pg.position,pg.domain,...cells,tot]);
+  });
+  s2.push(['','FREKUENSI',...names.map(n=>ok.filter(pg=>pg.sections&&pg.sections[n]).length),'']);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s2),'2. Matrix');
+
+  // Sheet 3: Gap Analysis
+  if(p.gap){
+    const noOur=p.gap.every(g=>g.weHave===null);
+    const s3=[['Section','Freq','%',...(noOur?[]:['Status Kita']),'Priority','Action','Kompetitor']];
+    [...p.gap].sort((a,b)=>(PRIO_ORDER[a.priority]??9)-(PRIO_ORDER[b.priority]??9)).forEach(g=>{
+      s3.push([g.section,`${g.freq}/${g.total}`,g.pct+'%',...(noOur?[]:[g.weHave?'PUNYA':'BELUM']),g.priority.replace(/[^\x00-\x7F]/g,'').trim(),g.action,g.competitors.join(', ')]);
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s3),'3. Gap');
+  }
+  // Sheet 4: Benchmark
+  if(p.bench&&p.bench.length){
+    const s4=[['Metric','Avg','Min','Max','Kita','Status']];
+    p.bench.forEach(b=>s4.push([b.label,b.avg,b.min,b.max,b.ourVal===null?'-':b.ourVal,b.status.replace(/[^\x00-\x7F]/g,'').trim()]));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s4),'4. Benchmark');
+  }
+  // Sheet 5: Blueprint
+  if(p.blueprint){
+    const b=p.blueprint;
+    const s5=[['Kategori','Sections','Catatan'],
+      ['MUST HAVE (Critical)',b.critical.join(' | ')||'-','Wajib ada'],
+      ['SHOULD HAVE (High)',b.high.join(' | ')||'-','Sangat disarankan'],
+      ['NICE TO HAVE (Medium)',b.medium.join(' | ')||'-','Differentiator'],
+      ['OUR ADVANTAGE',b.advantage.join(' | ')||'-','Keunggulan kita'],
+    ];
+    if(b.topComp)s5.push(['BENCHMARK TARGET',`${b.topComp} (${b.topCount} section)`,'Samai/lampaui']);
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s5),'5. Blueprint');
+  }
+  // Sheet 6: Page Detail (metrics + headings)
+  const s6=[['#','Domain','PageType','Title','Words','H2','H3','Img','Vid','Form','WA','CTA','Schema','Headings (H1>H2>H3)']];
+  ok.forEach(pg=>{
+    const hd=[...pg.h1.map(t=>'H1:'+t),...pg.h2.map(t=>'H2:'+t),...pg.h3.map(t=>'H3:'+t)].join(' || ');
+    s6.push([pg.position,pg.domain,pg.pageType,pg.meta_title,pg.word_count,pg.h2_count,pg.h3_count,pg.image_count,pg.video_count,pg.form_count,pg.wa_link_count,pg.cta_button_count,pg.has_schema?'yes':'no',hd]);
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s6),'6. Page Detail');
+
+  XLSX.writeFile(wb,safeName(p.keyword||p.name)+'.xlsx');
+  toast('XLSX (6 sheet) diunduh!');
+}
+
+// CSV mengikuti VIEW yang sedang aktif
+function exportCSV(){
+  const p=P();if(!p||!p.serp||!p.serp.length){toast('Belum ada hasil.','err');return;}
+  const names=SEC_NAMES();const ok=crawledPages(p);
+  let rows=[],fname=curView;
+  if(curView==='serp'){rows=[['#','Domain','Type','Title','Snippet','URL'],...p.serp.map(s=>[s.position,s.domain,s.platform||'Website',s.title,s.snippet,s.url])];}
+  else if(curView==='matrix'){
+    rows=[['#','Domain',...names,'Σ']];
+    [...p.pages].filter(Boolean).sort((a,b)=>a.position-b.position).forEach(pg=>{
+      if(pg.skipped||pg.failed){rows.push([pg.position,pg.domain,...names.map(()=>pg.skipped?'(skip)':'(fail)'),'']);return;}
+      let tot=0;rows.push([pg.position,pg.domain,...names.map(n=>{const h=pg.sections&&pg.sections[n];if(h)tot++;return h?'Y':'';}),tot]);
+    });
+  }
+  else if(curView==='gap'&&p.gap){rows=[['Section','Freq','%','StatusKita','Priority','Action','Kompetitor'],...[...p.gap].sort((a,b)=>(PRIO_ORDER[a.priority]??9)-(PRIO_ORDER[b.priority]??9)).map(g=>[g.section,`${g.freq}/${g.total}`,g.pct+'%',g.weHave===null?'-':(g.weHave?'PUNYA':'BELUM'),g.priority.replace(/[^\x00-\x7F]/g,'').trim(),g.action,g.competitors.join('; ')])];}
+  else if(curView==='bench'&&p.bench){rows=[['Metric','Avg','Min','Max','Kita','Status'],...p.bench.map(b=>[b.label,b.avg,b.min,b.max,b.ourVal===null?'-':b.ourVal,b.status.replace(/[^\x00-\x7F]/g,'').trim()])];}
+  else{rows=[['#','Domain','PageType','Title','Words','H2','H3','Img','Vid','Form','WA','CTA','Schema'],...ok.map(pg=>[pg.position,pg.domain,pg.pageType,pg.meta_title,pg.word_count,pg.h2_count,pg.h3_count,pg.image_count,pg.video_count,pg.form_count,pg.wa_link_count,pg.cta_button_count,pg.has_schema?'yes':'no'])];fname='pagedetail';}
+  const csv=rows.map(r=>r.map(c=>{const s=String(c==null?'':c);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\n');
+  dlBlob(safeName(p.keyword)+'-'+fname+'.csv',new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  toast(`CSV (${fname}) diunduh!`);
+}
+
+// Section Matrix → PNG/SVG (visual ringkas, bukan tabel mentah lebar)
+function exportMatrixImg(fmt){
+  const p=P();if(!p||!crawledPages(p).length){toast('Belum ada matrix. Run Analysis dulu.','err');return;}
+  const names=SEC_NAMES();const ok=crawledPages(p);
+  const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+  const bg=isDark?'#0b0e13':'#ffffff',fg=isDark?'#e4e8f0':'#0f1419',sub=isDark?'#8892a4':'#5e6773',grid=isDark?'#2a3040':'#e5e8ed',yes='#34d399',hot='#ef4444',warm='#f59e0b';
+  const colW=30,rowH=22,labelW=170,headH=110,padX=16,padY=54;
+  const rows=ok.slice().sort((a,b)=>a.position-b.position);
+  const W=padX*2+labelW+names.length*colW+34;
+  const H=padY+headH+rows.length*rowH+rowH+24;
+  const freq=names.map(n=>ok.filter(pg=>pg.sections&&pg.sections[n]).length);
+  let s=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="DM Sans, sans-serif">`;
+  s+=`<rect width="${W}" height="${H}" fill="${bg}"/>`;
+  s+=`<text x="${padX}" y="26" fill="${fg}" font-size="15" font-weight="700">Section Matrix — ${esc(p.keyword||'')}</text>`;
+  s+=`<text x="${padX}" y="44" fill="${sub}" font-size="10" font-family="Space Mono, monospace">${ok.length} website · 18 section · ${new Date().toLocaleDateString('id-ID')}</text>`;
+  const x0=padX+labelW,y0=padY+headH;
+  // header labels (vertical)
+  names.forEach((n,i)=>{const cx=x0+i*colW+colW/2;s+=`<text x="${cx}" y="${y0-6}" fill="${sub}" font-size="9" transform="rotate(-90 ${cx} ${y0-6})" text-anchor="start">${esc(secAbbr(n))}</text>`;});
+  // rows
+  rows.forEach((pg,r)=>{
+    const y=y0+r*rowH;
+    s+=`<text x="${padX}" y="${y+rowH/2+3}" fill="${fg}" font-size="10">${esc((pg.domain||'').slice(0,24))}</text>`;
+    names.forEach((n,i)=>{const has=pg.sections&&pg.sections[n];const cx=x0+i*colW;s+=`<rect x="${cx}" y="${y}" width="${colW-2}" height="${rowH-2}" fill="${has?yes+'22':'none'}" stroke="${grid}" stroke-width=".5"/>`;if(has)s+=`<text x="${cx+(colW-2)/2}" y="${y+rowH/2+3}" fill="${yes}" font-size="11" font-weight="700" text-anchor="middle">✓</text>`;});
+    let tot=names.filter(n=>pg.sections&&pg.sections[n]).length;
+    s+=`<text x="${x0+names.length*colW+14}" y="${y+rowH/2+3}" fill="${fg}" font-size="10" font-weight="700" text-anchor="middle">${tot}</text>`;
+  });
+  // freq row
+  const fy=y0+rows.length*rowH;
+  s+=`<text x="${padX}" y="${fy+rowH/2+3}" fill="${sub}" font-size="9" font-weight="700">FREKUENSI</text>`;
+  freq.forEach((c,i)=>{const pct=ok.length?c/ok.length:0;const col=pct>=.7?hot:pct>=.5?warm:sub;const cx=x0+i*colW;s+=`<text x="${cx+(colW-2)/2}" y="${fy+rowH/2+3}" fill="${col}" font-size="10" font-weight="700" text-anchor="middle">${c}</text>`;});
+  s+=`<text x="${W-padX}" y="${H-8}" fill="${sub}" font-size="8" font-family="Space Mono, monospace" text-anchor="end">LP Competitor Analyzer · Teguh Gunawan, S.Li.</text>`;
+  s+=`</svg>`;
+
+  if(fmt==='svg'){dlBlob(safeName(p.keyword)+'-matrix.svg',new Blob([s],{type:'image/svg+xml'}));toast('SVG matrix diunduh!');return;}
+  // PNG: render via canvas, dengan guard ukuran (<16384px)
+  const scale=Math.min(2,Math.floor(16384/Math.max(W,H))||1);
+  const img=new Image();
+  const url='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(s)));
+  img.onload=()=>{
+    const cv=document.createElement('canvas');cv.width=W*scale;cv.height=H*scale;
+    const ctx=cv.getContext('2d');ctx.scale(scale,scale);ctx.drawImage(img,0,0);
+    cv.toBlob(b=>{if(!b){toast('PNG gagal','err');return;}dlBlob(safeName(p.keyword)+'-matrix.png',b);toast('PNG matrix diunduh!');},'image/png');
+  };
+  img.onerror=()=>toast('PNG gagal render','err');
+  img.src=url;
+}
+
+// ---------- Init ----------
+loadTheme();
+loadAll();
+renderProjects();
+renderActiveInfo();
+renderView();
+updateStatusPills();
+</script>
+</body>
+</html>
