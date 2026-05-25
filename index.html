@@ -204,6 +204,9 @@ button{font-family:var(--f);}
 .tag-fail{font-size:8px;font-family:var(--m);font-weight:700;background:var(--danger);color:#fff;padding:1px 5px;border-radius:3px;letter-spacing:.5px;}
 .tag-block{font-size:8px;font-family:var(--m);font-weight:700;background:#7c3aed;color:#fff;padding:1px 5px;border-radius:3px;letter-spacing:.5px;}
 .tag-skip2{font-size:8px;font-family:var(--m);font-weight:700;background:var(--s2);color:var(--td);border:1px solid var(--bd);padding:1px 5px;border-radius:3px;letter-spacing:.3px;}
+.tag-art{font-size:8px;font-family:var(--m);font-weight:700;background:rgba(91,155,255,.18);color:var(--acc);border:1px solid var(--accBd);padding:1px 5px;border-radius:3px;letter-spacing:.3px;}
+.kind-toggle{margin-left:auto;font-family:var(--m);font-size:9px;background:var(--s2);color:var(--td);border:1px solid var(--bd);border-radius:4px;padding:2px 8px;cursor:pointer;transition:all .12s;}
+.kind-toggle:hover{background:var(--accBg);color:var(--acc);border-color:var(--accBd);}
 
 /* INFO ROWS (status crawl — di modal Help) */
 .info-row{display:block;margin:8px 0;padding-left:2px;font-size:11px;line-height:1.6;color:var(--td);}
@@ -390,6 +393,7 @@ button{font-family:var(--f);}
       <div class="vt" id="viewTabs">
         <button class="active" data-view="serp">SERP Overview</button>
         <button data-view="matrix">Section Matrix</button>
+        <button data-view="topics">Article Topics</button>
         <button data-view="gap">Gap Analysis</button>
         <button data-view="bench">Content Benchmark</button>
         <button data-view="blueprint">LP Blueprint</button>
@@ -813,7 +817,7 @@ function parsePage(html,url){
   const ctaTexts=[...new Set(ctaEls.map(e=>e.textContent.trim().replace(/\s+/g,' ')).filter(Boolean))].slice(0,6);
 
   // page-type heuristic
-  const pageType=detectPageType(doc,url,{h1,h2,words,forms,schema});
+  const pt=detectPageType(doc,url,{h1,h2,words,forms,schema});
 
   return {
     meta_title:(doc.querySelector('title')?.textContent||'').trim().slice(0,160),
@@ -825,25 +829,53 @@ function parsePage(html,url){
     word_count:words,
     cta_button_count:ctaEls.length,
     cta_button_texts:ctaTexts,
+    pageType:pt.label, pageKind:pt.kind,
   };
 }
 
+// Mengembalikan {kind:'article'|'landing', label:'...'} — kind dipakai utk pisah analisis.
 function detectPageType(doc,url,m){
-  const path=(()=>{try{return new URL(url).pathname;}catch(e){return url;}})();
+  const path=(()=>{try{return new URL(url).pathname.toLowerCase();}catch(e){return (url||'').toLowerCase();}})();
   const isHome=path==='/'||path==='';
   const ld=[...doc.querySelectorAll('script[type="application/ld+json"]')].map(s=>s.textContent).join(' ');
   const hasArticleSchema=/"@type"\s*:\s*"(Article|BlogPosting|NewsArticle)"/i.test(ld);
-  const hasProductSchema=/"@type"\s*:\s*"(Product|Offer)"/i.test(ld);
-  const titleAll=(m.h1.join(' ')+' '+m.h2.join(' ')).toLowerCase();
+  const hasProductSchema=/"@type"\s*:\s*"(Product|Offer|AggregateOffer)"/i.test(ld);
+  const heads=(m.h1.join(' ')+' '+m.h2.join(' ')).toLowerCase();
+  const words=m.words||0, forms=m.forms||0, h2n=m.h2.length;
 
-  if(hasProductSchema) return 'Product Page';
-  if(hasArticleSchema) return 'Article / Blog';
-  if(isHome) return 'Homepage';
-  if(/\b\d+\s+(cara|tips|rekomendasi|best|terbaik|daftar|list)\b/i.test(titleAll)) return 'Listicle';
-  if(/\b(cara|how to|tutorial|panduan)\b/i.test(titleAll)) return 'How-to / Guide';
-  if(m.forms>=1 && m.words<1200) return 'Landing Page';
-  if(m.words>=1200) return 'Article / Content';
-  return 'Landing Page';
+  // ---- skoring artikel vs landing ----
+  let art=0, lp=0;
+  // schema = sinyal kuat
+  if(hasArticleSchema) art+=4;
+  if(hasProductSchema) lp+=4;
+  // URL pattern
+  if(/\/(blog|artikel|article|news|berita|read|baca|tips|panduan|guide|kategori-artikel)\//.test(path)) art+=3;
+  if(/\/(product|produk|shop|store|toko|jual|beli|pricing|harga|layanan|service|katalog|p\/)/.test(path)) lp+=3;
+  // judul tipikal artikel
+  if(/\b(\d+\s+(cara|tips|rekomendasi|terbaik|best|daftar|jenis|macam)|cara |how to|tutorial|panduan|apa itu|kenapa|mengapa|tips )\b/i.test(heads)) art+=3;
+  // panjang konten
+  if(words>=1500) art+=3; else if(words>=900) art+=1;
+  if(words<600) lp+=1;
+  // banyak H2 + teks panjang = artikel; form = LP
+  if(h2n>=5 && words>=900) art+=1;
+  if(forms>=1 && words<1200) lp+=2;
+  if(isHome) lp+=2;
+  // CTA/harga di heading = LP
+  if(/\b(harga|pricing|paket|beli sekarang|order|checkout|daftar sekarang|gratis konsultasi|hubungi kami)\b/i.test(heads)) lp+=2;
+
+  const kind = art>lp ? 'article' : 'landing';
+  // label detail untuk tampilan
+  let label;
+  if(kind==='article'){
+    if(/\b\d+\s+(cara|tips|rekomendasi|terbaik|best|daftar|jenis|macam)\b/i.test(heads)) label='Listicle';
+    else if(/\b(cara|how to|tutorial|panduan|apa itu)\b/i.test(heads)) label='How-to / Guide';
+    else label='Article / Blog';
+  }else{
+    if(hasProductSchema||/\/(product|produk|p\/|shop)/.test(path)) label='Product Page';
+    else if(isHome) label='Homepage';
+    else label='Landing Page';
+  }
+  return {kind,label};
 }
 
 // ---- Deteksi balasan anti-bot / halaman kosong (BLOCKED) ----
@@ -950,11 +982,17 @@ Return ONLY valid JSON, no markdown:
 
 // pages yang benar-benar dianalisa: bukan gagal, bukan platform yang di-skip
 function crawledPages(p){return p.pages.filter(x=>x&&!x.failed&&!x.skipped&&!x.blocked&&!x.notCrawled);}
+// jenis halaman efektif: override manual menang atas deteksi otomatis
+function effectiveKind(pg){return pg.pageKindOverride||pg.pageKind||'landing';}
+function articlePages(p){return crawledPages(p).filter(x=>effectiveKind(x)==='article');}
+function landingPages(p){return crawledPages(p).filter(x=>effectiveKind(x)!=='article');}
+// normalisasi judul topik artikel biar bisa dibandingkan antar artikel
+function normTopic(s){return (s||'').toLowerCase().replace(/[^\w\s]/g,' ').replace(/\s+/g,' ').trim();}
 
 // ---- Gap analysis (ported generate_gap_analysis) ----
 function buildGap(p){
   const names=SECTION_PATTERNS.map(s=>s[0]);
-  const all=crawledPages(p);
+  const all=landingPages(p);
   const ourClean=ourDomain();
   const ourPage=ourClean?all.find(pg=>pg.domain.includes(ourClean)):null;
   // kompetitor = semua website ter-crawl KECUALI halaman kita
@@ -988,7 +1026,7 @@ function buildGap(p){
 // ---- Content benchmark (ported generate_content_benchmarks) ----
 const BENCH_METRICS=[['word_count','Word Count'],['h2_count','H2 Headings'],['h3_count','H3 Headings'],['image_count','Images'],['video_count','Videos'],['form_count','Forms'],['wa_link_count','WhatsApp Links'],['cta_button_count','CTA Buttons']];
 function buildBench(p){
-  const pages=crawledPages(p);
+  const pages=landingPages(p);
   const ourClean=ourDomain();
   const ourPage=ourClean?pages.find(pg=>pg.domain.includes(ourClean)):null;
   const comps=pages.filter(pg=>!(ourClean&&pg.domain.includes(ourClean)));
@@ -1008,7 +1046,7 @@ function buildBench(p){
 // ---- Blueprint (ported sheet 5) ----
 function buildBlueprint(gap,p){
   const pick=pr=>gap.filter(g=>g.priority.includes(pr)).map(g=>g.section);
-  const pages=crawledPages(p);
+  const pages=landingPages(p);
   const ourClean=ourDomain();
   let topComp=null,topCount=-1;
   pages.forEach(pg=>{if(ourClean&&pg.domain.includes(ourClean))return;const c=Object.values(pg.sections||{}).filter(Boolean).length;if(c>topCount){topCount=c;topComp=pg.domain;}});
@@ -1094,6 +1132,7 @@ function renderView(){
   }
   if(curView==='serp')return renderSerpView(p);
   if(curView==='matrix')return renderMatrixView(p);
+  if(curView==='topics')return renderTopicsView(p);
   if(curView==='gap')return renderGapView(p);
   if(curView==='bench')return renderBenchView(p);
   if(curView==='blueprint')return renderBlueprintView(p);
@@ -1152,8 +1191,9 @@ function renderMatrixView(p){
   if(!pages.length)return $('content').innerHTML=notAnalyzed(p);
   const names=SEC_NAMES();
   const ourClean=ourDomain();
-  const ok=pages.filter(x=>!x.failed&&!x.skipped);
-  const freq=names.map(n=>ok.filter(pg=>pg.sections&&pg.sections[n]).length);
+  const lp=landingPages(p); // frekuensi & % dihitung HANYA dari landing/product
+  const freq=names.map(n=>lp.filter(pg=>pg.sections&&pg.sections[n]).length);
+  const artN=articlePages(p).length;
 
   // header: kolom tegak pakai abbr, tooltip nama penuh, data-col untuk hover highlight
   const head=`<tr>
@@ -1168,17 +1208,19 @@ function renderMatrixView(p){
     if(pg.blocked)return `<tr class="fail-row"><td class="mx-num mx-sticky-a">${pg.position}</td><td class="mx-dom mx-sticky-b"><strong>${esc(pg.domain)}</strong> <span class="tag-block">BLOCKED</span></td><td colspan="${names.length+1}" class="failcell">${esc(pg.blockReason||'ditolak situs')} — di-exclude dari gap</td></tr>`;
     if(pg.notCrawled)return `<tr class="is-plat"><td class="mx-num mx-sticky-a">${pg.position}</td><td class="mx-dom mx-sticky-b"><strong>${esc(pg.domain)}</strong> <span class="tag-skip2">not crawled</span></td><td colspan="${names.length+1}" class="skipcell">di luar limit crawl (hemat RPD)</td></tr>`;
     if(pg.failed)return `<tr class="fail-row"><td class="mx-num mx-sticky-a">${pg.position}</td><td class="mx-dom mx-sticky-b"><strong>${esc(pg.domain)}</strong> <span class="tag-fail">FAIL</span></td><td colspan="${names.length+1}" class="failcell">crawl gagal — ${esc(pg.error||'')}</td></tr>`;
+    if(effectiveKind(pg)==='article')return `<tr class="is-plat"><td class="mx-num mx-sticky-a">${pg.position}</td><td class="mx-dom mx-sticky-b"><strong>${esc(pg.domain)}</strong> <span class="tag-art">ARTIKEL</span></td><td colspan="${names.length+1}" class="skipcell">halaman artikel — analisa di tab <b>Article Topics</b> (section LP ga relevan)</td></tr>`;
     let tot=0;
     const cells=names.map((n,i)=>{const has=pg.sections&&pg.sections[n];if(has)tot++;return `<td class="mx-cell ${has?'yes':'no'}" data-col="${i}">${has?'✓':''}</td>`;}).join('');
     return `<tr class="${ours?'ours':''}"><td class="mx-num mx-sticky-a">${pg.position}</td><td class="mx-dom mx-sticky-b"><strong>${esc(pg.domain)}</strong>${ours?' <span class="tag-ours">OURS</span>':''}</td>${cells}<td class="mx-num"><strong>${tot}</strong></td></tr>`;
   }).join('');
 
-  const freqRow=`<tr class="mx-freq"><td class="mx-num mx-sticky-a"></td><td class="mx-dom mx-sticky-b"><strong>FREKUENSI</strong></td>${freq.map((c,i)=>{const pct=ok.length?c/ok.length:0;const cls=pct>=.7?'hot':pct>=.5?'warm':'';return `<td class="mx-num ${cls}" data-col="${i}" title="${c}/${ok.length} = ${Math.round(pct*100)}%">${c}</td>`;}).join('')}<td class="mx-num"></td></tr>`;
+  const freqRow=`<tr class="mx-freq"><td class="mx-num mx-sticky-a"></td><td class="mx-dom mx-sticky-b"><strong>FREKUENSI</strong></td>${freq.map((c,i)=>{const pct=lp.length?c/lp.length:0;const cls=pct>=.7?'hot':pct>=.5?'warm':'';return `<td class="mx-num ${cls}" data-col="${i}" title="${c}/${lp.length} landing = ${Math.round(pct*100)}%">${c}</td>`;}).join('')}<td class="mx-num"></td></tr>`;
 
   $('content').innerHTML=`
-    <div class="view-head"><div><h2>Section Matrix</h2><div class="view-sub">${ok.length} website ter-analisa · 19 section · ✓ = ada · hover header buat nama lengkap</div></div>
+    <div class="view-head"><div><h2>Section Matrix</h2><div class="view-sub">${lp.length} landing/product page · 18 section · ✓ = ada${artN?` · ${artN} artikel dipisah ke tab Article Topics`:''}</div></div>
       <div class="mx-legend"><span class="mx-lg yes">✓ ada</span><span class="mx-lg hot">≥70%</span><span class="mx-lg warm">≥50%</span></div>
     </div>
+    ${artN&&!lp.length?`<div class="cmp-gap-box" style="display:block;">⚠ Semua hasil yang ter-crawl adalah <strong>artikel</strong>, bukan landing page. Section Matrix ga relevan di sini — buka tab <strong>Article Topics</strong> untuk analisa yang sesuai.</div>`:''}
     <div class="matrix-wrap"><table class="dt matrix"><thead>${head}</thead><tbody>${body}${freqRow}</tbody></table></div>`;
 
   // hover highlight kolom
@@ -1190,6 +1232,49 @@ function renderMatrixView(p){
     });
     tbl.addEventListener('mouseleave',()=>tbl.querySelectorAll('.col-hl').forEach(x=>x.classList.remove('col-hl')));
   }
+}
+
+// ---- Article Topics (analisa artikel: topik dibahas dari H2/H3) ----
+function renderTopicsView(p){
+  if(!p.pages||!p.pages.length)return $('content').innerHTML=notAnalyzed(p);
+  const arts=articlePages(p);
+  if(!arts.length){
+    return $('content').innerHTML=`<div class="view-head"><div><h2>Article Topics</h2><div class="view-sub">Analisa khusus halaman artikel/blog</div></div></div>
+      <div class="es" style="height:auto;padding:40px;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--tf)" stroke-width="1.4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <h4>Tidak ada halaman artikel di hasil ini</h4><p>Semua hasil ter-crawl terdeteksi sebagai landing/product page. Lihat <strong>Section Matrix</strong> untuk analisanya.</p></div>`;
+  }
+
+  // kumpulkan topik (H2 + H3) per artikel
+  const perArticle=arts.map(pg=>{
+    const topics=[...(pg.h2||[]),...(pg.h3||[])].map(t=>t.trim()).filter(t=>t.length>3&&t.length<120);
+    return {domain:pg.domain,url:pg.url,position:pg.position,title:pg.meta_title,wc:pg.word_count,label:pg.pageType,topics};
+  });
+
+  // topik umum lintas artikel (berdasarkan kata kunci yang sering muncul di heading)
+  const freq={};
+  perArticle.forEach(a=>{
+    const seen=new Set();
+    a.topics.forEach(t=>{
+      const n=normTopic(t);
+      // pakai bigram/keyword sederhana: simpan judul ternormalisasi
+      if(n && !seen.has(n)){seen.add(n);freq[n]=(freq[n]||0)+1;}
+    });
+  });
+  // ambil topik yang muncul di >=2 artikel
+  const common=Object.entries(freq).filter(([k,v])=>v>=2).sort((a,b)=>b[1]-a[1]).slice(0,25);
+
+  const cards=perArticle.sort((a,b)=>a.position-b.position).map(a=>`
+    <div class="pd-card">
+      <div class="pd-head"><span class="pd-pos">#${a.position}</span><strong>${esc(a.domain)}</strong><span class="pd-type">${esc(a.label)}</span><span class="pd-src">${a.wc} kata · ${a.topics.length} topik</span></div>
+      <div class="pd-title">${esc(a.title||'')}</div>
+      <div class="pd-sub">Topik yang dibahas (dari H2/H3)</div>
+      <div class="bp-items">${a.topics.length?a.topics.map(t=>`<span class="bp-chip">${esc(t)}</span>`).join(''):'<span class="bp-empty">— heading ga kebaca —</span>'}</div>
+    </div>`).join('');
+
+  $('content').innerHTML=`
+    <div class="view-head"><div><h2>Article Topics</h2><div class="view-sub">${arts.length} artikel ter-analisa · topik diambil dari heading H2/H3 tiap artikel</div></div></div>
+    ${common.length?`<div class="cmp-gap-box ok" style="display:block;"><strong>📊 Topik yang dibahas ≥2 artikel (kemungkinan wajib dibahas):</strong><div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">${common.map(([k,v])=>`<span class="bp-chip" title="dibahas ${v} artikel">${esc(k)} <b style="color:var(--acc);">×${v}</b></span>`).join('')}</div></div>`:''}
+    <div class="pd-list">${cards}</div>`;
 }
 
 // ---- Gap Analysis ----
@@ -1272,20 +1357,36 @@ function renderDetailView(p){
     if(pg.failed)return `<div class="pd-card fail"><div class="pd-head"><span class="pd-pos">#${pg.position}</span><strong>${esc(pg.domain)}</strong> <span class="tag-fail">FAIL</span></div><div class="pd-err">${esc(pg.error||'crawl gagal')}</div></div>`;
     const secsOn=Object.entries(pg.sections||{}).filter(([k,v])=>v).map(([k])=>k);
     const headings=[...pg.h1.map(t=>['h1',t]),...pg.h2.map(t=>['h2',t]),...pg.h3.map(t=>['h3',t])];
+    const idx=p.pages.indexOf(pg);
+    const ek=effectiveKind(pg);
+    const kindBadge=ek==='article'?'<span class="tag-art">ARTIKEL</span>':'<span class="tag-web">LANDING/PRODUCT</span>';
+    const ovr=pg.pageKindOverride?'<span class="pd-src" title="kamu ubah manual">manual</span>':'';
+    const toggleBtn=`<button class="kind-toggle" onclick="togglePageKind(${idx})" title="Ubah jenis halaman (koreksi kalau salah deteksi)">⇄ jadiin ${ek==='article'?'Landing':'Artikel'}</button>`;
     return `<div class="pd-card ${ours?'ours':''}">
-      <div class="pd-head"><span class="pd-pos">#${pg.position}</span><strong>${esc(pg.domain)}</strong>${ours?' <span class="tag-ours">OURS</span>':''}<span class="pd-type">${esc(pg.pageType||'')}</span>${pg.sectionSource?`<span class="pd-src">${esc(pg.sectionSource)}</span>`:''}</div>
+      <div class="pd-head"><span class="pd-pos">#${pg.position}</span><strong>${esc(pg.domain)}</strong>${ours?' <span class="tag-ours">OURS</span>':''} ${kindBadge}${ovr}<span class="pd-type">${esc(pg.pageType||'')}</span>${pg.sectionSource?`<span class="pd-src">${esc(pg.sectionSource)}</span>`:''}${toggleBtn}</div>
       <div class="pd-title">${esc(pg.meta_title||'(no title)')}</div>
       <div class="pd-meta">${esc(pg.meta_description||'')}</div>
       <div class="pd-stats">words:${pg.word_count} · H2:${pg.h2_count} · H3:${pg.h3_count} · img:${pg.image_count} · vid:${pg.video_count} · form:${pg.form_count} · WA:${pg.wa_link_count} · CTA:${pg.cta_button_count} · schema:${pg.has_schema?'yes':'no'}</div>
       ${pg.cta_button_texts&&pg.cta_button_texts.length?`<div class="pd-cta">CTA: ${pg.cta_button_texts.map(t=>`<span class="bp-chip">${esc(t)}</span>`).join('')}</div>`:''}
       <div class="pd-sub">Heading hierarchy</div>
       <div class="pd-headings">${headings.length?headings.map(([tag,txt])=>`<div class="hd hd-${tag}"><span class="hd-tag">${tag}</span>${esc(txt)}</div>`).join(''):'<span class="bp-empty">— no headings —</span>'}</div>
-      <div class="pd-sub">Sections detected (${secsOn.length})</div>
-      <div class="bp-items">${secsOn.length?secsOn.map(s=>`<span class="bp-chip">${esc(s)}</span>`).join(''):'<span class="bp-empty">— none —</span>'}</div>
-      ${pg._extraSections&&pg._extraSections.length?`<div class="pd-sub">Extra sections (AI-discovered)</div><div class="bp-items">${pg._extraSections.map(s=>`<span class="bp-chip" style="border-color:var(--accBd);color:var(--acc);">${esc(s)}</span>`).join('')}</div>`:''}
+      ${ek==='article'
+        ? `<div class="pd-sub">Topik dibahas (H2/H3) — analisa lengkap di tab Article Topics</div><div class="bp-items">${headings.filter(h=>h[0]!=='h1').length?headings.filter(h=>h[0]!=='h1').slice(0,30).map(h=>`<span class="bp-chip">${esc(h[1])}</span>`).join(''):'<span class="bp-empty">— heading ga kebaca —</span>'}</div>`
+        : `<div class="pd-sub">Sections detected (${secsOn.length})</div><div class="bp-items">${secsOn.length?secsOn.map(s=>`<span class="bp-chip">${esc(s)}</span>`).join(''):'<span class="bp-empty">— none —</span>'}</div>${pg._extraSections&&pg._extraSections.length?`<div class="pd-sub">Extra sections (AI-discovered)</div><div class="bp-items">${pg._extraSections.map(s=>`<span class="bp-chip" style="border-color:var(--accBd);color:var(--acc);">${esc(s)}</span>`).join('')}</div>`:''}`}
     </div>`;
   }).join('');
   $('content').innerHTML=`<div class="view-head"><div><h2>Page Detail</h2><div class="view-sub">Struktur konten tiap kompetitor — heading hierarchy + jenis halaman</div></div></div><div class="pd-list">${blocks}</div>`;
+}
+// Override jenis halaman manual (artikel ⇄ landing), lalu re-calc analisa
+function togglePageKind(idx){
+  const p=P();if(!p||!p.pages[idx])return;
+  const pg=p.pages[idx];
+  const cur=effectiveKind(pg);
+  pg.pageKindOverride = cur==='article' ? 'landing' : 'article';
+  // re-calc semua yang tergantung jenis halaman
+  p.gap=buildGap(p);p.bench=buildBench(p);p.blueprint=buildBlueprint(p.gap,p);
+  saveProjects();renderActiveInfo();renderView();
+  toast(`Diubah jadi ${pg.pageKindOverride==='article'?'Artikel':'Landing/Product'} — analisa di-update`);
 }
 
 // ---------- COMPARE 1-on-1 ----------
